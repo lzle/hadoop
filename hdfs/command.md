@@ -71,3 +71,16 @@ hdfs dfs -copyToLocal /lzl/test ./
 # -r 递归删除子目录
 hdfs dfs -rm -r /lzl/test
 ```
+
+### 4、haadmin
+
+查看节点状态
+```
+hdfs haadmin -getServiceState nn1
+```
+
+将 nn1 切换为 Standby 备用节点
+```
+hdfs haadmin -transitionToStandby --forcemanual nn1
+```
+
