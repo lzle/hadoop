@@ -83,7 +83,10 @@ hdfs haadmin -getServiceState nn1
 ```
 hdfs haadmin -transitionToStandby --forcemanual nn1
 ```
-
+把 active 切换到nn1上。
+```
+hdfs haadmin -failover nn2 nn1
+```
 
  sudo -u flume hdfs debug recoverLease -path  /fucheng.wang/crudeoil.hexun.com_202211220000.3.24.k7_haidene.1669046460213.gz -retries 10
  
