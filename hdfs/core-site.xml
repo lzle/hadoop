@@ -1,0 +1,7 @@
+<- 删除的文件保存时间，7天 ->
+<property>
+<name>fs.trash.interval</name>
+<value>10080</value>
+<final>false</final>
+<source>core-site.xml</source>
+</property>
