@@ -9,7 +9,7 @@
 <value>10</value>
 </property>
 
-<!-- 每次筛选副本数=numlive*this -->
+<!-- 每次筛选副本数 = numlive * this -->
 <property>
 <name>dfs.namenode.replication.work.multiplier.per.iteration</name>
 <value>10</value>
@@ -21,6 +21,21 @@
 <value>900000</value>
 </property>
 
+<!-- 每次筛选副本数 = Math.ceil(numlive * this) -->
+<property>
+<name>dfs.namenode.invalidate.work.pct.per.iteration</name>
+<value>0.32f</value>
+<final>false</final>
+<source>hdfs-default.xml</source>
+</property>
+
+<!-- 每个datanode删除副本并发数 -->
+<property>
+<name>dfs.block.invalidate.limit</name>
+<value>1000</value>
+<final>false</final>
+<source>hdfs-default.xml</source>
+</property>
 
 
 
