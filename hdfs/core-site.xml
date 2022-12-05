@@ -1,4 +1,4 @@
-<- 删除的文件保存时间，7天 ->
+<!-- 删除的文件保存时间，7天 -->
 <property>
 <name>fs.trash.interval</name>
 <value>10080</value>
