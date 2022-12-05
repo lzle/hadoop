@@ -1,0 +1,27 @@
+<!-- 每个datanode复制副本并发数 -->
+<property>
+<name>dfs.namenode.replication.max-streams</name>
+<value>6</value>
+</property>
+
+<property>
+<name>dfs.namenode.replication.max-streams-hard-limit</name>
+<value>10</value>
+</property>
+
+<!-- 每次筛选副本数=numlive*this -->
+<property>
+<name>dfs.namenode.replication.work.multiplier.per.iteration</name>
+<value>10</value>
+</property>
+
+<!-- 心跳重新检查时间(ms),超过两倍的时间判断节点失效 -->
+<property>
+<name>dfs.namenode.heartbeat.recheck-interval</name>
+<value>900000</value>
+</property>
+
+
+
+
+
