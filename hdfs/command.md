@@ -90,8 +90,7 @@ hdfs haadmin -failover nn2 nn1
 
 
 
-### 5、日志
-
+### 5、日志输出
 
 DateNode 停止
 ```
@@ -116,6 +115,42 @@ DateNode 重新加入
 2022-12-02 15:26:14,835 INFO org.apache.hadoop.hdfs.server.blockmanagement.BlockManager: Rescan of postponedMisreplicatedBlocks completed in 0 msecs. 207 blocks are left. 0 blocks were removed.
 ```
 
+NameNode 创建文件
+```
+2023-01-03 14:50:13,911 DEBUG org.apache.hadoop.hdfs.StateChange: *DIR* NameNode.create: file /lzl/test/c.txt._COPYING_ for DFSClient_NONMAPREDUCE_-1987862239_1 at 172.18.154.107
+2023-01-03 14:50:13,912 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* NameSystem.startFile: src=/lzl/test/c.txt._COPYING_, holder=DFSClient_NONMAPREDUCE_-1987862239_1, clientMachine=172.18.154.107, createParent=true, replication=2, createFlag=[CREATE, OVERWRITE], blockSize=268435456, supportedVersions=[CryptoProtocolVersion{description='Encryption zones', version=2, unknownValue=null}]
+2023-01-03 14:50:13,912 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* addFile: c.txt._COPYING_ is added
+2023-01-03 14:50:13,913 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* NameSystem.startFile: added /lzl/test/c.txt._COPYING_ inode 18367 DFSClient_NONMAPREDUCE_-1987862239_1
+2023-01-03 14:50:13,961 DEBUG org.apache.hadoop.hdfs.StateChange: BLOCK* getAdditionalBlock: /lzl/test/c.txt._COPYING_  inodeId 18367 for DFSClient_NONMAPREDUCE_-1987862239_1
+2023-01-03 14:50:13,963 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* FSDirectory.addBlock: /lzl/test/c.txt._COPYING_ with blk_1073743790_2966 block is added to the in-memory file system
+2023-01-03 14:50:13,963 INFO org.apache.hadoop.hdfs.StateChange: BLOCK* allocate blk_1073743790_2966, replicas=172.18.154.107:9866, 172.18.154.224:9866 for /lzl/test/c.txt._COPYING_
+2023-01-03 14:50:13,963 DEBUG org.apache.hadoop.hdfs.StateChange: persistNewBlock: /lzl/test/c.txt._COPYING_ with new block blk_1073743790_2966, current total block count is 1
+2023-01-03 14:50:14,287 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* NameSystem.completeFile: /lzl/test/c.txt._COPYING_ for DFSClient_NONMAPREDUCE_-1987862239_1
+2023-01-03 14:50:14,287 DEBUG org.apache.hadoop.hdfs.StateChange: closeFile: /lzl/test/c.txt._COPYING_ with 1 blocks is persisted to the file system
+2023-01-03 14:50:14,288 INFO org.apache.hadoop.hdfs.StateChange: DIR* completeFile: /lzl/test/c.txt._COPYING_ is closed by DFSClient_NONMAPREDUCE_-1987862239_1
+2023-01-03 14:50:14,297 DEBUG org.apache.hadoop.hdfs.StateChange: *DIR* NameNode.rename: /lzl/test/c.txt._COPYING_ to /lzl/test/c.txt
+2023-01-03 14:50:14,297 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* NameSystem.renameTo: /lzl/test/c.txt._COPYING_ to /lzl/test/c.txt
+2023-01-03 14:50:14,297 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* FSDirectory.renameTo: /lzl/test/c.txt._COPYING_ to /lzl/test/c.txt
+2023-01-03 14:50:14,298 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* FSDirectory.unprotectedRenameTo: /lzl/test/c.txt._COPYING_ is renamed to /lzl/test/c.txt
+```
 
- sudo -u flume hdfs debug recoverLease -path  /fucheng.wang/crudeoil.hexun.com_202211220000.3.24.k7_haidene.1669046460213.gz -retries 10
- 
+### 6、设置日志级别
+
+临时修改日志级别
+
+```
+http://bsy-fujian-xiamen-1-172-18-154-201:9870/logLevel
+
+Log Level
+
+Results
+Submitted Class Name: org.apache.hadoop.hdfs.StateChange
+Log Class: org.apache.commons.logging.impl.Log4JLogger
+Effective Level: DEBUG
+```
+
+
+``` shell
+sudo -u flume hdfs debug recoverLease -path  /fucheng.wang/crudeoil.hexun.com_202211220000.3.24.k7_haidene.1669046460213.gz -retries 10
+```
+
