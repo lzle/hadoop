@@ -37,6 +37,18 @@
 <source>hdfs-default.xml</source>
 </property>
 
+<!-- namenode的rpc并发数 -->
+<property>
+<name>dfs.namenode.handler.count</name>
+<value>200</value>
+<final>false</final>
+<source>hdfs-site.xml</source>
+</property>
 
-
-
+<!-- datanode的rpc并发数 -->
+<property>
+<name>dfs.datanode.handler.count</name>
+<value>200</value>
+<final>false</final>
+<source>hdfs-site.xml</source>
+</property>
