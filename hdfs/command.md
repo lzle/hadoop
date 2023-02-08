@@ -1,5 +1,7 @@
-# HDFS 常用命令
+# HDFS 文档
 
+
+## 常用命令
 
 ### 1、daemon
 
@@ -90,15 +92,46 @@ hdfs haadmin -failover nn2 nn1
 
 
 
-### 5、日志输出
+## 日志输出
 
-DateNode 停止
+### 1、设置日志级别
+
+临时修改日志级别，无需重启
+
+```
+namenode
+http://bsy-fujian-xiamen-1-172-18-154-201:9870/logLevel
+
+Log Level
+
+Results
+Submitted Class Name: org.apache.hadoop.hdfs.StateChange
+Log Class: org.apache.commons.logging.impl.Log4JLogger
+Effective Level: DEBUG
+
+datanode
+http://bsy-fujian-xiamen-1-172-18-154-201:9864/logLevel
+Log Level
+
+Results
+Submitted Class Name: org.apache.hadoop.hdfs.StateChange
+Log Class: org.apache.commons.logging.impl.Log4JLogger
+Submitted Level: DEBUG
+Setting Level to DEBUG ...
+Effective Level: DEBUG
+```
+
+### 2、DateNode 心跳超时
+
+NateNode 端日志输出
 ```
 2022-12-02 15:22:04,287 INFO org.apache.hadoop.hdfs.StateChange: BLOCK* removeDeadDatanode: lost heartbeat from 172.18.154.201:9866, removeBlocksFromBlockMap true
 2022-12-02 15:22:04,291 INFO org.apache.hadoop.net.NetworkTopology: Removing a node: /default-rack/172.18.154.201:9866
 ```
 
-DateNode 重新加入
+### 3、DateNode 注册
+
+NateNode 端日志输出
 ```
 2022-12-02 15:26:07,556 INFO org.apache.hadoop.hdfs.StateChange: BLOCK* registerDatanode: from DatanodeRegistration(172.18.154.201:9866, datanodeUuid=126b4743-728d-4800-b5bd-5e83c819fecc, infoPort=9864, infoSecurePort=0, ipcPort=9867, storageInfo=lv=-57;cid=CID-b3746fbe-15c7-4492-9690-29df9fcf4749;nsid=652530984;c=1666691608942) storage 126b4743-728d-4800-b5bd-5e83c819fecc
 2022-12-02 15:26:07,556 INFO org.apache.hadoop.net.NetworkTopology: Removing a node: /default-rack/172.18.154.201:9866
@@ -115,7 +148,9 @@ DateNode 重新加入
 2022-12-02 15:26:14,835 INFO org.apache.hadoop.hdfs.server.blockmanagement.BlockManager: Rescan of postponedMisreplicatedBlocks completed in 0 msecs. 207 blocks are left. 0 blocks were removed.
 ```
 
-NameNode 创建文件
+### 4、上传文件
+
+NameNode 端日志输出
 ```
 2023-01-03 14:50:13,911 DEBUG org.apache.hadoop.hdfs.StateChange: *DIR* NameNode.create: file /lzl/test/c.txt._COPYING_ for DFSClient_NONMAPREDUCE_-1987862239_1 at 172.18.154.107
 2023-01-03 14:50:13,912 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* NameSystem.startFile: src=/lzl/test/c.txt._COPYING_, holder=DFSClient_NONMAPREDUCE_-1987862239_1, clientMachine=172.18.154.107, createParent=true, replication=2, createFlag=[CREATE, OVERWRITE], blockSize=268435456, supportedVersions=[CryptoProtocolVersion{description='Encryption zones', version=2, unknownValue=null}]
@@ -134,20 +169,37 @@ NameNode 创建文件
 2023-01-03 14:50:14,298 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* FSDirectory.unprotectedRenameTo: /lzl/test/c.txt._COPYING_ is renamed to /lzl/test/c.txt
 ```
 
-### 6、设置日志级别
-
-临时修改日志级别
-
+DataNode 端日志输出
 ```
-http://bsy-fujian-xiamen-1-172-18-154-201:9870/logLevel
-
-Log Level
-
-Results
-Submitted Class Name: org.apache.hadoop.hdfs.StateChange
-Log Class: org.apache.commons.logging.impl.Log4JLogger
-Effective Level: DEBUG
+2023-02-08 17:55:56,576 INFO org.apache.hadoop.hdfs.server.datanode.DataNode: Receiving BP-182789411-172.18.154.107-1666691608942:blk_1073743793_2969 src: /172.18.154.201:37440 dest: /172.18.154.107:9866
+2023-02-08 17:55:56,606 INFO org.apache.hadoop.hdfs.server.datanode.DataNode.clienttrace: src: /172.18.154.201:37440, dest: /172.18.154.107:9866, bytes: 25968, op: HDFS_WRITE, cliID: DFSClient_NONMAPREDUCE_469479046_1, offset: 0, srvID: e9570619-9a17-4c1e-8471-3d044ae9dcd3, blockid: BP-182789411-172.18.154.107-1666691608942:blk_1073743793_2969, duration(ns): 26624471
+2023-02-08 17:55:56,606 INFO org.apache.hadoop.hdfs.server.datanode.DataNode: PacketResponder: BP-182789411-172.18.154.107-1666691608942:blk_1073743793_2969, type=LAST_IN_PIPELINE terminating
 ```
+
+### 5、下载文件
+
+无日志
+
+
+### 6、删除文件
+
+NameNode 端日志输出，移动到回收站
+```
+2023-02-08 17:46:02,904 DEBUG org.apache.hadoop.hdfs.StateChange: *DIR* NameNode.mkdirs: /user/root/.Trash/Current/lzl/test
+2023-02-08 17:46:02,904 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* NameSystem.mkdirs: /user/root/.Trash/Current/lzl/test
+2023-02-08 17:46:02,905 INFO org.apache.hadoop.ipc.Server: IPC Server handler 3 on 8020, call Call#6 Retry#0 org.apache.hadoop.hdfs.protocol.ClientProtocol.mkdirs from 172.18.154.201:35966: org.apache.hadoop.security.AccessControlException: Permission denied: user=root, access=EXECUTE, inode="/user":hadoop:supergroup:drwx------
+2023-02-08 17:46:29,355 DEBUG org.apache.hadoop.hdfs.StateChange: *DIR* NameNode.mkdirs: /user/hadoop/.Trash/Current/lzl/test
+2023-02-08 17:46:29,355 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* NameSystem.mkdirs: /user/hadoop/.Trash/Current/lzl/test
+2023-02-08 17:46:29,356 DEBUG org.apache.hadoop.hdfs.StateChange: mkdirs: created directory /user/hadoop/.Trash/Current
+2023-02-08 17:46:29,357 DEBUG org.apache.hadoop.hdfs.StateChange: mkdirs: created directory /user/hadoop/.Trash/Current/lzl
+2023-02-08 17:46:29,357 DEBUG org.apache.hadoop.hdfs.StateChange: mkdirs: created directory /user/hadoop/.Trash/Current/lzl/test
+2023-02-08 17:46:29,357 INFO org.apache.hadoop.hdfs.server.namenode.FSEditLog: Number of transactions: 4 Total time for transactions(ms): 4 Number of transactions batched in Syncs: 0 Number of syncs: 1 SyncTimes(ms): 8 13
+2023-02-08 17:46:29,384 DEBUG org.apache.hadoop.hdfs.StateChange: *DIR* NameNode.rename: /lzl/test/a.txt to /user/hadoop/.Trash/Current/lzl/test/a.txt
+2023-02-08 17:46:29,385 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* NameSystem.renameTo: with options - /lzl/test/a.txt to /user/hadoop/.Trash/Current/lzl/test/a.txt
+2023-02-08 17:46:29,385 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* FSDirectory.renameTo: /lzl/test/a.txt to /user/hadoop/.Trash/Current/lzl/test/a.txt
+2023-02-08 17:46:29,386 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* FSDirectory.unprotectedRenameTo: /lzl/test/a.txt is renamed to /user/hadoop/.Trash/Current/lzl/test/a.txt
+```
+
 
 
 ``` shell
