@@ -1,44 +1,125 @@
-# HDFS 文档
+# HDFS 使用文档
 
+## 目录
+
+* [常用命令](#常用命令)
+    * [daemon](#daemon)
+    * [dfsadmin](#dfsadmin)
+    * [dfs](#dfs)
+    * [haadmin](#haadmin)
+    * [balancer](#balancer)
+* [日志](#日志)
+    * [设置日志级别](设置日志级别)
+    * [DateNode 心跳超时](#DateNode-心跳超时)
+    * [DateNode 注册](#DateNode-注册)
+    * [上传文件](#上传文件)
+    * [下载文件](#下载文件)
+    * [删除文件](#删除文件)
+    
 
 ## 常用命令
 
-### 1、daemon
+### daemon
 
 NameNode 启动/停止
 ```shell
 hdfs --daemon start namenode
 hdfs --daemon stop namenode
+hdfs --daemon status namenode
 ```
 
 DataNode 启动/停止
 ```shell
 hdfs --daemon start datanode
 hdfs --daemon stop datanode
+hdfs --daemon status datanode
 ```
 
-### 2、dfsadmin
+支持的操作如下
+
+```shell
+    Daemon Commands:
+
+balancer             run a cluster balancing utility
+datanode             run a DFS datanode
+dfsrouter            run the DFS router
+diskbalancer         Distributes data evenly among disks on a given node
+httpfs               run HttpFS server, the HDFS HTTP Gateway
+journalnode          run the DFS journalnode
+mover                run a utility to move block replicas across storage types
+namenode             run the DFS namenode
+nfs3                 run an NFS version 3 gateway
+portmap              run a portmap service
+secondarynamenode    run the DFS secondary namenode
+zkfc                 run the ZK Failover Controller daemon
+```
+
+### dfsadmin
 
 汇报集群状态
+
 ```shell
 hdfs dfsadmin -report -live
 hdfs dfsadmin -report -dead
 ```
 
-### 3、dfs
+支持的操作如下
 
-创建目录
+```shell
+$ hdfs dfsadmin -h
+Usage: hdfs dfsadmin
+Note: Administrative commands can only be run as the HDFS superuser.
+	[-report [-live] [-dead] [-decommissioning] [-enteringmaintenance] [-inmaintenance]]
+	[-safemode <enter | leave | get | wait>]
+	[-saveNamespace [-beforeShutdown]]
+	[-rollEdits]
+	[-restoreFailedStorage true|false|check]
+	[-refreshNodes]
+	[-setQuota <quota> <dirname>...<dirname>]
+	[-clrQuota <dirname>...<dirname>]
+	[-setSpaceQuota <quota> [-storageType <storagetype>] <dirname>...<dirname>]
+	[-clrSpaceQuota [-storageType <storagetype>] <dirname>...<dirname>]
+	[-finalizeUpgrade]
+	[-rollingUpgrade [<query|prepare|finalize>]]
+	[-upgrade <query | finalize>]
+	[-refreshServiceAcl]
+	[-refreshUserToGroupsMappings]
+	[-refreshSuperUserGroupsConfiguration]
+	[-refreshCallQueue]
+	[-refresh <host:ipc_port> <key> [arg1..argn]
+	[-reconfig <namenode|datanode> <host:ipc_port> <start|status|properties>]
+	[-printTopology]
+	[-refreshNamenodes datanode_host:ipc_port]
+	[-getVolumeReport datanode_host:ipc_port]
+	[-deleteBlockPool datanode_host:ipc_port blockpoolId [force]]
+	[-setBalancerBandwidth <bandwidth in bytes per second>]
+	[-getBalancerBandwidth <datanode_host:ipc_port>]
+	[-fetchImage <local directory>]
+	[-allowSnapshot <snapshotDir>]
+	[-disallowSnapshot <snapshotDir>]
+	[-shutdownDatanode <datanode_host:ipc_port> [upgrade]]
+	[-evictWriters <datanode_host:ipc_port>]
+	[-getDatanodeInfo <datanode_host:ipc_port>]
+	[-metasave filename]
+	[-triggerBlockReport [-incremental] <datanode_host:ipc_port>]
+	[-listOpenFiles [-blockingDecommission] [-path <path>]]
+	[-help [cmd]]
+```
+[使用手册](https://hadoop.apache.org/docs/r3.1.1/hadoop-project-dist/hadoop-hdfs/HDFSCommands.html#dfsadmin)
+
+### dfs
+
+1、创建目录
 ```shell
 hdfs dfs -mkdir -p /lzl/test
 ```
 
-从本地上次文件
-
+2、从本地上次文件
 ```shell
 hdfs dfs -put a.txt /lzl/test
 ```
 
-从本地上传目录
+3、从本地上传目录
 ```shell
 hdfs dfs -copyFromLocal localdir /lzl/test
 
@@ -46,35 +127,86 @@ hdfs dfs -copyFromLocal localdir /lzl/test
 hdfs dfs -copyFromLocal localdir/* /lzl/test
 ```
 
-上传本地目录并删除
+4、上传本地目录并删除
 ```shell
 hdfs dfs -moveFromLocal localdir /lzl/test
 ```
 
-查看文件
-
+5、查看文件
 ```shell
 hdfs dfs -cat /lzl/test/a.txt
 ```
 
-下载文件
+6、下载文件
 ```shell
 hdfs dfs -get /lzl/test/b.txt ./
 ```
 
-下载目录
+7、下载目录
 ```shell
 # 本地有 test 目录
 hdfs dfs -copyToLocal /lzl/test ./
 ```
 
-删除文件/目录
+8、删除文件/目录
 ```shell
 # -r 递归删除子目录
 hdfs dfs -rm -r /lzl/test
 ```
 
-### 4、haadmin
+支持的操作如下
+
+```shell
+$ hdfs dfs -h
+Usage: hadoop fs [generic options]
+	[-appendToFile <localsrc> ... <dst>]
+	[-cat [-ignoreCrc] <src> ...]
+	[-checksum <src> ...]
+	[-chgrp [-R] GROUP PATH...]
+	[-chmod [-R] <MODE[,MODE]... | OCTALMODE> PATH...]
+	[-chown [-R] [OWNER][:[GROUP]] PATH...]
+	[-copyFromLocal [-f] [-p] [-l] [-d] [-t <thread count>] <localsrc> ... <dst>]
+	[-copyToLocal [-f] [-p] [-ignoreCrc] [-crc] <src> ... <localdst>]
+	[-count [-q] [-h] [-v] [-t [<storage type>]] [-u] [-x] [-e] <path> ...]
+	[-cp [-f] [-p | -p[topax]] [-d] <src> ... <dst>]
+	[-createSnapshot <snapshotDir> [<snapshotName>]]
+	[-deleteSnapshot <snapshotDir> <snapshotName>]
+	[-df [-h] [<path> ...]]
+	[-du [-s] [-h] [-v] [-x] <path> ...]
+	[-expunge]
+	[-find <path> ... <expression> ...]
+	[-get [-f] [-p] [-ignoreCrc] [-crc] <src> ... <localdst>]
+	[-getfacl [-R] <path>]
+	[-getfattr [-R] {-n name | -d} [-e en] <path>]
+	[-getmerge [-nl] [-skip-empty-file] <src> <localdst>]
+	[-head <file>]
+	[-help [cmd ...]]
+	[-ls [-C] [-d] [-h] [-q] [-R] [-t] [-S] [-r] [-u] [-e] [<path> ...]]
+	[-mkdir [-p] <path> ...]
+	[-moveFromLocal <localsrc> ... <dst>]
+	[-moveToLocal <src> <localdst>]
+	[-mv <src> ... <dst>]
+	[-put [-f] [-p] [-l] [-d] <localsrc> ... <dst>]
+	[-renameSnapshot <snapshotDir> <oldName> <newName>]
+	[-rm [-f] [-r|-R] [-skipTrash] [-safely] <src> ...]
+	[-rmdir [--ignore-fail-on-non-empty] <dir> ...]
+	[-setfacl [-R] [{-b|-k} {-m|-x <acl_spec>} <path>]|[--set <acl_spec> <path>]]
+	[-setfattr {-n name [-v value] | -x name} <path>]
+	[-setrep [-R] [-w] <rep> <path> ...]
+	[-stat [format] <path> ...]
+	[-tail [-f] <file>]
+	[-test -[defsz] <path>]
+	[-text [-ignoreCrc] <src> ...]
+	[-touch [-a] [-m] [-t TIMESTAMP ] [-c] <path> ...]
+	[-touchz <path> ...]
+	[-truncate [-w] <length> <path> ...]
+	[-usage [cmd ...]]
+```
+
+[使用手册](https://hadoop.apache.org/docs/r3.1.1/hadoop-project-dist/hadoop-common/FileSystemShell.html)
+
+
+### haadmin
 
 查看节点状态
 ```
@@ -90,11 +222,47 @@ hdfs haadmin -transitionToStandby --forcemanual nn1
 hdfs haadmin -failover nn2 nn1
 ```
 
+支持的操作如下
+
+```shell
+$ hdfs  haadmin
+Usage: haadmin [-ns <nameserviceId>]
+    [-transitionToActive [--forceactive] <serviceId>]
+    [-transitionToStandby <serviceId>]
+    [-failover [--forcefence] [--forceactive] <serviceId> <serviceId>]
+    [-getServiceState <serviceId>]
+    [-getAllServiceState]
+    [-checkHealth <serviceId>]
+    [-help <command>]
+```
 
 
-## 日志输出
+### balancer
 
-### 1、设置日志级别
+支持的操作如下
+
+```shell
+$ hdfs  balancer -h
+Usage: hdfs balancer
+	[-policy <policy>]	the balancing policy: datanode or blockpool
+	[-threshold <threshold>]	Percentage of disk capacity
+	[-exclude [-f <hosts-file> | <comma-separated list of hosts>]]	Excludes the specified datanodes.
+	[-include [-f <hosts-file> | <comma-separated list of hosts>]]	Includes only the specified datanodes.
+	[-source [-f <hosts-file> | <comma-separated list of hosts>]]	Pick only the specified datanodes as source nodes.
+	[-blockpools <comma-separated list of blockpool ids>]	The balancer will only run on blockpools included in this list.
+	[-idleiterations <idleiterations>]	Number of consecutive idle iterations (-1 for Infinite) before exit.
+	[-runDuringUpgrade]	Whether to run the balancer during an ongoing HDFS upgrade.This is usually not desired since it will not affect used space on over-utilized machines.
+```
+
+[使用手册](https://hadoop.apache.org/docs/r3.1.1/hadoop-project-dist/hadoop-hdfs/HDFSCommands.html#balancer)
+
+[设计文档](https://issues.apache.org/jira/browse/HADOOP-1652)
+
+
+## 日志
+
+
+### 设置日志级别
 
 临时修改日志级别，无需重启
 
@@ -121,7 +289,7 @@ Setting Level to DEBUG ...
 Effective Level: DEBUG
 ```
 
-### 2、DateNode 心跳超时
+### DateNode 心跳超时
 
 NateNode 端日志输出
 ```
@@ -129,7 +297,7 @@ NateNode 端日志输出
 2022-12-02 15:22:04,291 INFO org.apache.hadoop.net.NetworkTopology: Removing a node: /default-rack/172.18.154.201:9866
 ```
 
-### 3、DateNode 注册
+### DateNode 注册
 
 NateNode 端日志输出
 ```
@@ -148,7 +316,7 @@ NateNode 端日志输出
 2022-12-02 15:26:14,835 INFO org.apache.hadoop.hdfs.server.blockmanagement.BlockManager: Rescan of postponedMisreplicatedBlocks completed in 0 msecs. 207 blocks are left. 0 blocks were removed.
 ```
 
-### 4、上传文件
+### 上传文件
 
 NameNode 端日志输出
 ```
@@ -176,12 +344,12 @@ DataNode 端日志输出
 2023-02-08 17:55:56,606 INFO org.apache.hadoop.hdfs.server.datanode.DataNode: PacketResponder: BP-182789411-172.18.154.107-1666691608942:blk_1073743793_2969, type=LAST_IN_PIPELINE terminating
 ```
 
-### 5、下载文件
+### 下载文件
 
 无日志
 
 
-### 6、删除文件
+### 删除文件
 
 NameNode 端日志输出，移动到回收站
 ```
