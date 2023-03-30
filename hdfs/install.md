@@ -372,3 +372,103 @@ hdfs --daemon start journalnode
 [hadoop@bsy-fujian-xiamen-1-172-18-154-107 ~]$ cd /opt/hadoop/
 [hadoop@bsy-fujian-xiamen-1-172-18-154-107 hadoop]$ hdfs dfs -put README.txt hdfs://baishan-test/lzl
 ```
+
+### 11、启动yarn
+
+```
+[root@bsy-fujian-xiamen-1-172-18-154-107 sbin]# yarn --daemon start resourcemanager
+[root@bsy-fujian-xiamen-1-172-18-154-107 sbin]# yarn --daemon start nodemanager
+```
+
+访问管理页面
+
+http://bsy-fujian-xiamen-1-172-18-154-107:8088/
+
+**执行示例**
+
+```shell
+[hadoop@bsy-fujian-xiamen-1-172-18-154-201 ~]$ hadoop jar /opt/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-3.1.2.jar wordcount /lzl/test/a.txt /result
+
+2023-03-30 20:52:49,469 INFO impl.YarnClientImpl: Submitted application application_1680176074931_0001
+2023-03-30 20:52:49,521 INFO mapreduce.Job: The url to track the job: http://bsy-fujian-xiamen-1-172-18-154-201:8088/proxy/application_1680176074931_0001/
+2023-03-30 20:52:49,522 INFO mapreduce.Job: Running job: job_1680176074931_0001
+2023-03-30 20:53:10,814 INFO mapreduce.Job: Job job_1680176074931_0001 running in uber mode : false
+2023-03-30 20:53:10,816 INFO mapreduce.Job:  map 0% reduce 0%
+2023-03-30 20:53:19,910 INFO mapreduce.Job:  map 100% reduce 0%
+2023-03-30 20:53:29,977 INFO mapreduce.Job:  map 100% reduce 100%
+2023-03-30 20:53:30,996 INFO mapreduce.Job: Job job_1680176074931_0001 completed successfully
+2023-03-30 20:53:31,143 INFO mapreduce.Job: Counters: 53
+	File System Counters
+		FILE: Number of bytes read=19117
+		FILE: Number of bytes written=487451
+		FILE: Number of read operations=0
+		FILE: Number of large read operations=0
+		FILE: Number of write operations=0
+		HDFS: Number of bytes read=26067
+		HDFS: Number of bytes written=15725
+		HDFS: Number of read operations=8
+		HDFS: Number of large read operations=0
+		HDFS: Number of write operations=2
+	Job Counters
+		Launched map tasks=1
+		Launched reduce tasks=1
+		Data-local map tasks=1
+		Total time spent by all maps in occupied slots (ms)=25368
+		Total time spent by all reduces in occupied slots (ms)=30624
+		Total time spent by all map tasks (ms)=6342
+		Total time spent by all reduce tasks (ms)=7656
+		Total vcore-milliseconds taken by all map tasks=6342
+		Total vcore-milliseconds taken by all reduce tasks=7656
+		Total megabyte-milliseconds taken by all map tasks=25976832
+		Total megabyte-milliseconds taken by all reduce tasks=31358976
+	Map-Reduce Framework
+		Map input records=417
+		Map output records=2148
+		Map output bytes=32744
+		Map output materialized bytes=19117
+		Input split bytes=99
+		Combine input records=2148
+		Combine output records=848
+		Reduce input groups=848
+		Reduce shuffle bytes=19117
+		Reduce input records=848
+		Reduce output records=848
+		Spilled Records=1696
+		Shuffled Maps =1
+		Failed Shuffles=0
+		Merged Map outputs=1
+		GC time elapsed (ms)=169
+		CPU time spent (ms)=1730
+		Physical memory (bytes) snapshot=442802176
+		Virtual memory (bytes) snapshot=10946334720
+		Total committed heap usage (bytes)=300941312
+		Peak Map Physical memory (bytes)=275808256
+		Peak Map Virtual memory (bytes)=5468872704
+		Peak Reduce Physical memory (bytes)=166993920
+		Peak Reduce Virtual memory (bytes)=5477462016
+	Shuffle Errors
+		BAD_ID=0
+		CONNECTION=0
+		IO_ERROR=0
+		WRONG_LENGTH=0
+		WRONG_MAP=0
+		WRONG_REDUCE=0
+	File Input Format Counters
+		Bytes Read=25968
+	File Output Format Counters
+		Bytes Written=15725
+```
+
+任务运行状况
+
+![image](https://user-images.githubusercontent.com/29885111/228842189-b676352c-0c3b-431e-b55f-c02e7ad6fd92.png)
+
+执行结果
+
+![image](https://user-images.githubusercontent.com/29885111/228843124-54cae6a0-f064-41e8-9be9-7e04b2268380.png)
+
+
+
+
+
+
