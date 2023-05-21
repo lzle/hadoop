@@ -109,10 +109,10 @@ def delete_file():
 
 
 if __name__ == '__main__':
-    for i in range(10):
-        th = threading.Thread(target=delete_file)
-        th.start()
-
+    # for i in range(10):
+    #     th = threading.Thread(target=put_and_get)
+    #     th.start()
+    put_and_get()
 
 # pip install requests==2.26.0
 # pip install hdfs
