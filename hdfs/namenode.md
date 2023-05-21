@@ -3,7 +3,7 @@
 
 ## 目录
 
-* [ClientProtocol 实现](#ClientProtocol实现)
+* [ClientProtocol 实现](#ClientProtocol-实现)
     * [创建文件](#创建文件)
     * [创建数据块](#创建数据块)
 
@@ -27,15 +27,24 @@ HdfsFileStatus create(String src, FsPermission masked,
     throws IOException;
 ```
 
-首先看一下方法参数中比较重要的几个标志位 flag：overwrite 用于指示如果目标文件 src 已经存在了，是否覆盖这个文件；
-create 用于指示 src 文件不存在时，是否创建这个文件；replication 表示副本数；blockSize 表示块的大小；
-createParent 用于指示目标文件的父目录不存在时，是否创建目录。
+首先看一下方法中重要的参数：
 
-* 如果父目录不存在，createParent 为 True 时表示创建，否则抛出异常；
-* 如果文件已经存在，并且要覆盖写文件，则 FSDirectory.delete() 从文件系统目录树中删除这个文件，然后调用 fsn.removeLeasesAndINodes 
-  方法删除租约和 INode；
-* 在目标文件路径上创建一个 INodeFileUnderConstruction 对象并插入目录树，之后在租约管理器中添加租约。
+* 标志位 flag：overwrite 用于指示如果目标文件 src 已经存在了，是否覆盖这个文件；create 用于指示 src 文件不存在时，是否创建这个文件；
+* replication 表示副本数；blockSize 表示块的大小；
+* createParent 用于指示目标文件的父目录不存在时，是否创建目录。
 
+
+参数对应的几点注意事项如下：
+```
+1、 如果父目录不存在，createParent 为 True 时表示创建，否则抛出异常；
+
+2、 如果文件已经存在，并且要覆盖写文件，则 FSDirectory.delete() 从文件系统目录树中删除这个文件，
+然后调用 fsn.removeLeasesAndINodes 方法删除租约和 INode；
+
+3、 在目标文件路径上创建一个 INodeFileUnderConstruction 对象并插入目录树，之后在租约管理器中添加租约。
+```
+
+代码
 
 ```java
 static HdfsFileStatus startFile(
@@ -121,14 +130,19 @@ LocatedBlock addBlock(String src, String clientName,
     throws IOException;
 ```
 
-具体实现流程在 getAdditionalBlock() 方法中，主要包括下面三部分
+具体实现流程在 getAdditionalBlock() 方法中，主要包括下面三部分：
 
-* FSDirWriteFileOp.validateAddBlock 检查文件状态，是否发生请求重传、异常等操作，返回实例 ValidateAddBlockResult，
-  包含要申请 block 的信息；
+```
+1、FSDirWriteFileOp.validateAddBlock 检查文件状态，是否发生请求重传、异常等操作，
+返回实例 ValidateAddBlockResult，包含要申请 block 的信息；
 
-* FSDirWriteFileOp.chooseTargetForNewBlock 分配数据节点；
+2、FSDirWriteFileOp.chooseTargetForNewBlock 分配数据节点；
 
-* FSDirWriteFileOp.storeAllocatedBlock 完成添加一个新的数据块，这个操作会进行加锁，并且会再次执行 analyzeFileState 方法进行检查。
+3、FSDirWriteFileOp.storeAllocatedBlock 完成添加一个新的数据块，这个操作会进行加锁，
+并且会再次执行 analyzeFileState 方法进行检查。
+```
+
+代码
 
 ```java
 LocatedBlock getAdditionalBlock(
@@ -179,26 +193,29 @@ LocatedBlock getAdditionalBlock(
 ```
 
 
-**1、分析状态——analyzeFileState()**
+#### 1、分析状态——analyzeFileState()
 
 validateAddBlock 主要功能在于 analyzeFileState()方法，analyzeFileState首先进行一系列判断操作，判断是否有写操作权限，
 判断 Namenode 是否处于安全模式中，检查文件系统中保存的对象是否太多，检查文件的租约。然后 analyzeFileState() 会将 Client 通过 ClientProtocol.addBlock() 方法汇报
 的最后一个数据块 previousBlock 与 Namenode 内存中记录的文件最后一个数据块 lastBlockInFile 进行比较。
 
-* previousBlock、lastBlockInFile 都为null，文件生成第一个 block，这种情况什么都不需要做。
+```
+1、previousBlock、lastBlockInFile 都为null，文件生成第一个 block，这种情况什么都不需要做。
 
-* 如果 previousBlock==null，也就是 addBlock()方法并未携带文件最后一个数据块的信息。
+2、如果 previousBlock==null，也就是 addBlock()方法并未携带文件最后一个数据块的信息。
   这种情况可能是 Client 调用 ClientProtocol.append()方法申请追加写文件，而文件的最后一个数据块正好写满，
   Client 就会调用 addBlock()方法申请新的数据块。这时方法无须执行任何操作。
 
-* 如果 previousBlock 信息与 penultimateBlock 信息匹配，penultimateBlock 是 Namenode记录的文件倒数第二个数据块的信息。
+3、如果 previousBlock 信息与 penultimateBlock 信息匹配，penultimateBlock 是 Namenode记录的文件倒数第二个数据块的信息。
   这种情况是 Namenode 已经成功地为 Client 分配了数据块，但是响应信息并未送回 Client，所以 Client 重发了请求。
   对于这种情况，由于 Namenode 已经成功地分配了数据块，并且 Client 没有向新分配的数据块写入任何数据，
   所以 analyzeFileState()方法会将分配的数据块保存至 onRetryBlock 参数中，
   getAdditionalBlock()方法可以直接将 onRetryBlock 中保存的数据块再次返回给 Client，而无须构造新的数据块。
   
-* previousBlock 信息与 lastBlockInFile 信息不匹配，这是异常的情况，不应该出现，直接抛出异常。
+4、previousBlock 信息与 lastBlockInFile 信息不匹配，这是异常的情况，不应该出现，直接抛出异常。
+```
 
+代码
 
 ```java
   private static FileState analyzeFileState(
@@ -270,13 +287,17 @@ validateAddBlock 主要功能在于 analyzeFileState()方法，analyzeFileState�
 再执行提交上一个数据块操作之前，会再次执行 analyzeFileState 方法对文件状态进行分析，主要为了防止失败重试后的并发操作，
 这个操作会进行加锁，所以不会出现两个线程同时申请覆盖的问题。
 
-commitOrCompleteLastBlock 执行逻辑如下
+commitOrCompleteLastBlock 执行逻辑如下：
 
-* 执行 commitBlock 方法，讲 block 状态改为 BlockUCState.COMMITTED。
+```
+1、执行 commitBlock 方法，讲 block 状态改为 BlockUCState.COMMITTED。
 
-* 执行 convertToCompleteBlock 方法，将 BlockInfoUnderConstruction 对象转换为普通的 BlockInfo 对象，也就是隐式地将
+2、执行 convertToCompleteBlock 方法，将 BlockInfoUnderConstruction 对象转换为普通的 BlockInfo 对象，也就是隐式地将
 BlockInfo 的状态变成了 COMPLETED，因为 BlockInfo.getBlockUCState()方法是始终返回 COMPLETED 状态的。
-  
+```
+
+代码
+
 ```java
 public boolean commitOrCompleteLastBlock(BlockCollection bc,
       Block commitBlock, INodesInPath iip) throws IOException {
