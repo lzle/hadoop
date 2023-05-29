@@ -353,19 +353,13 @@ DataNode 端日志输出
 
 NameNode 端日志输出，移动到回收站
 ```
-2023-02-08 17:46:02,904 DEBUG org.apache.hadoop.hdfs.StateChange: *DIR* NameNode.mkdirs: /user/root/.Trash/Current/lzl/test
-2023-02-08 17:46:02,904 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* NameSystem.mkdirs: /user/root/.Trash/Current/lzl/test
-2023-02-08 17:46:02,905 INFO org.apache.hadoop.ipc.Server: IPC Server handler 3 on 8020, call Call#6 Retry#0 org.apache.hadoop.hdfs.protocol.ClientProtocol.mkdirs from 172.18.154.201:35966: org.apache.hadoop.security.AccessControlException: Permission denied: user=root, access=EXECUTE, inode="/user":hadoop:supergroup:drwx------
-2023-02-08 17:46:29,355 DEBUG org.apache.hadoop.hdfs.StateChange: *DIR* NameNode.mkdirs: /user/hadoop/.Trash/Current/lzl/test
-2023-02-08 17:46:29,355 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* NameSystem.mkdirs: /user/hadoop/.Trash/Current/lzl/test
-2023-02-08 17:46:29,356 DEBUG org.apache.hadoop.hdfs.StateChange: mkdirs: created directory /user/hadoop/.Trash/Current
-2023-02-08 17:46:29,357 DEBUG org.apache.hadoop.hdfs.StateChange: mkdirs: created directory /user/hadoop/.Trash/Current/lzl
-2023-02-08 17:46:29,357 DEBUG org.apache.hadoop.hdfs.StateChange: mkdirs: created directory /user/hadoop/.Trash/Current/lzl/test
-2023-02-08 17:46:29,357 INFO org.apache.hadoop.hdfs.server.namenode.FSEditLog: Number of transactions: 4 Total time for transactions(ms): 4 Number of transactions batched in Syncs: 0 Number of syncs: 1 SyncTimes(ms): 8 13
-2023-02-08 17:46:29,384 DEBUG org.apache.hadoop.hdfs.StateChange: *DIR* NameNode.rename: /lzl/test/a.txt to /user/hadoop/.Trash/Current/lzl/test/a.txt
-2023-02-08 17:46:29,385 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* NameSystem.renameTo: with options - /lzl/test/a.txt to /user/hadoop/.Trash/Current/lzl/test/a.txt
-2023-02-08 17:46:29,385 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* FSDirectory.renameTo: /lzl/test/a.txt to /user/hadoop/.Trash/Current/lzl/test/a.txt
-2023-02-08 17:46:29,386 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* FSDirectory.unprotectedRenameTo: /lzl/test/a.txt is renamed to /user/hadoop/.Trash/Current/lzl/test/a.txt
+2023-05-29 22:22:48,191 DEBUG org.apache.hadoop.hdfs.StateChange: *DIR* NameNode.mkdirs: /user/hadoop/.Trash/Current/tmp
+2023-05-29 22:22:48,191 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* NameSystem.mkdirs: /user/hadoop/.Trash/Current/tmp
+2023-05-29 22:22:48,199 DEBUG org.apache.hadoop.hdfs.StateChange: *DIR* NameNode.rename: /tmp/c.txt to /user/hadoop/.Trash/Current/tmp/c.txt1685370168196
+2023-05-29 22:22:48,200 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* NameSystem.renameTo: with options - /tmp/c.txt to /user/hadoop/.Trash/Current/tmp/c.txt1685370168196
+2023-05-29 22:22:48,200 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* FSDirectory.renameTo: /tmp/c.txt to /user/hadoop/.Trash/Current/tmp/c.txt1685370168196
+2023-05-29 22:22:48,200 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* FSDirectory.unprotectedRenameTo: /tmp/c.txt is renamed to /user/hadoop/.Trash/Current/tmp/c.txt1685370168196
+2023-05-29 22:22:48,200 INFO org.apache.hadoop.hdfs.server.namenode.FSEditLog: Number of transactions: 8 Total time for transactions(ms): 4 Number of transactions batched in Syncs: 1 Number of syncs: 6 SyncTimes(ms): 140 41
 ```
 
 
