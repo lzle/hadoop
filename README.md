@@ -17,3 +17,16 @@ grep addStoredBlock hadoop-cmf-hdfs-NAMENODE-dx-lt-yd-zhejiang-jinhua-5-10-104-3
 ```
 sudo -u hadoop /opt/hadoop/bin/hdfs dfs -du -h /
 ```
+
+### 按分钟粒度查看分配速度
+
+```
+grep allocate hadoop-hadoop-namenode-dx-lt-yd-zhejiang-jinhua-5-10-104-4-41.log.4 | awk '{++a[substr($2,1,length($2)-7)]}END{for( k in a ){print $1" "k, a[k]}}' | sort
+2023-09-05 04:07 3264
+2023-09-05 04:08 9797
+2023-09-05 04:09 10086
+2023-09-05 04:10 11207
+2023-09-05 04:11 12381
+2023-09-05 04:12 7952
+2023-09-05 04:13 7705
+```
