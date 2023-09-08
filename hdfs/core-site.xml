@@ -21,3 +21,25 @@
 <final>false</final>
 <source>core-default.xml</source>
 </property>
+
+<!-- FSImageFile存储地址 -->
+<property>
+<name>dfs.namenode.name.dir</name>
+<value>/opt/hadoop/data/dfs/nn</value>
+<final>false</final>
+<source>hdfs-site.xml</source>
+</property>
+
+<!-- EditLogFile存储地址 -->
+<property>
+<name>dfs.namenode.edits.dir</name>
+<value>${dfs.namenode.name.dir}</value>
+<final>false</final>
+<source>hdfs-default.xml</source>
+</property>
+
+
+
+
+
+
