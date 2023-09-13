@@ -26,22 +26,29 @@ def get_current_date():
     return datetime.now().strftime("%Y-%m-%d")
 
 
-def archive_dir(src_dir_path, output_file):
-    file_names = []
-    for fn in os.listdir(src_dir_path):
-        # need first to archive
-        if fn.startswith("edits_inprogress"):
-            file_names.insert(0, fn)
-        else:
-            file_names.append(fn)
-    try:
-        with tarfile.open(output_file, "w:") as tar:
-            for fn in file_names:
-                tar.add(os.path.join(src_dir_path, fn))
-                time.sleep(1)
-                logging.info("tar file %s" % (fn))
-    except Exception as e:
-        logging.warning(repr(e))
+def archive_dir(src_dir_paths, output_file):
+    count = 0
+    while count < 5:
+        file_paths = []
+        try:
+            for dir in src_dir_paths:
+                for fn in os.listdir(dir):
+                    # need first to archive
+                    if fn.startswith("edits_inprogress"):
+                        file_paths.insert(0, os.path.join(dir, fn))
+                    else:
+                        file_paths.append(os.path.join(dir, fn))
+
+            with tarfile.open(output_file, "w:") as tar:
+                for fpath in file_paths:
+                    tar.add(fpath)
+                    time.sleep(0.1)
+                    logging.info("tar file %s" % (fpath))
+            return
+        except Exception as e:
+            logging.warning(repr(e))
+            count += 1
+            time.sleep(60)
 
 
 def upload_to_s3(key, file):
@@ -64,14 +71,14 @@ if __name__ == "__main__":
     logging.basicConfig(filename=LOG_FILE, level=logging.INFO,
                         format='[%(asctime)s,%(process)d-%(thread)d,%(filename)s,%(lineno)d,%(levelname)s] %(message)s')
 
-    meta_dir_path = "/opt/hadoop/data/dfs/nn/current"
+    meta_dir_paths = ["/opt/hadoop/data/dfs/nn/current", "/data/1/dfs/nn/current/"]
     host_name = get_host_name()
     current_date = get_current_date()
     mete_tar_file = "/data/0/%s-%s.tar" % (host_name, datetime.now().strftime("%Y%m%d%H%M"))
 
-    logging.info("Prepare to archive dir %s to file %s" % (meta_dir_path, mete_tar_file))
+    logging.info("Prepare to archive dir %s to file %s" % (meta_dir_paths, mete_tar_file))
 
-    archive_dir(meta_dir_path, mete_tar_file)
+    archive_dir(meta_dir_paths, mete_tar_file)
 
     logging.info("Archive dir finish")
 
