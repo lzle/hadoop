@@ -282,7 +282,7 @@ http://bsy-fujian-xiamen-1-172-18-154-201:9864/logLevel
 Log Level
 
 Results
-Submitted Class Name: org.apache.hadoop.hdfs.StateChange
+Submitted Class Name: org.apache.hadoop.hdfs.server.datanode.DataNode
 Log Class: org.apache.commons.logging.impl.Log4JLogger
 Submitted Level: DEBUG
 Setting Level to DEBUG ...
