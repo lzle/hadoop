@@ -1,4 +1,4 @@
-<!-- 每个datanode复制副本并发数 -->
+<!-- 每个DataNode复制副本并发数 -->
 <property>
 <name>dfs.namenode.replication.max-streams</name>
 <value>6</value>
@@ -33,13 +33,13 @@
 <value>16</value>
 </property>
 
-<!-- 处理Client Rpc的请求的线程数，建议值ln(number of DataNodes in this HDFS service) * 20 -->
+<!-- NameNode处理RPC请求的线程数，建议值ln(number of DataNodes in this HDFS service) * 20 -->
 <property>
 <name>dfs.namenode.handler.count</name>
-<value>100</value>
+<value>150</value>
 </property>
 
-<!-- DataNode Rpc线程并发数，处理NameNode请求 -->
+<!-- DataNode处理RPC请求的线程数，处理NameNode请求 -->
 <property>
 <name>dfs.datanode.handler.count</name>
 <value>10</value>
@@ -48,7 +48,7 @@
 <!-- DataNode处理数据传输的线程数 -->
 <property>
 <name>dfs.datanode.max.transfer.threads</name>
-<value>4096</value>
+<value>65535</value>
 </property>
 
 <!-- 关闭本地写 -->
@@ -57,7 +57,7 @@
 <value>false</value>
 </property>
 
-<!-- 优先筛选更低使用率的datanode -->
+<!-- 优先筛选更低使用率的DataNode -->
 <property>
   <name>dfs.block.replicator.classname</name>
   <value>org.apache.hadoop.hdfs.server.blockmanagement.AvailableSpaceBlockPlacementPolicy</value>
