@@ -9,19 +9,19 @@
     * [haadmin](#haadmin)
     * [balancer](#balancer)
 * [日志](#日志)
-    * [设置日志级别](设置日志级别)
+    * [设置日志级别](#设置日志级别)
     * [DateNode 心跳超时](#DateNode-心跳超时)
     * [DateNode 注册](#DateNode-注册)
     * [上传文件](#上传文件)
     * [下载文件](#下载文件)
     * [删除文件](#删除文件)
-    
 
 ## 常用命令
 
 ### daemon
 
 NameNode 启动/停止
+
 ```shell
 hdfs --daemon start namenode
 hdfs --daemon stop namenode
@@ -29,6 +29,7 @@ hdfs --daemon status namenode
 ```
 
 DataNode 启动/停止
+
 ```shell
 hdfs --daemon start datanode
 hdfs --daemon stop datanode
@@ -105,21 +106,25 @@ Note: Administrative commands can only be run as the HDFS superuser.
 	[-listOpenFiles [-blockingDecommission] [-path <path>]]
 	[-help [cmd]]
 ```
+
 [使用手册](https://hadoop.apache.org/docs/r3.1.1/hadoop-project-dist/hadoop-hdfs/HDFSCommands.html#dfsadmin)
 
 ### dfs
 
 1、创建目录
+
 ```shell
 hdfs dfs -mkdir -p /lzl/test
 ```
 
 2、从本地上次文件
+
 ```shell
 hdfs dfs -put a.txt /lzl/test
 ```
 
 3、从本地上传目录
+
 ```shell
 hdfs dfs -copyFromLocal localdir /lzl/test
 
@@ -128,27 +133,32 @@ hdfs dfs -copyFromLocal localdir/* /lzl/test
 ```
 
 4、上传本地目录并删除
+
 ```shell
 hdfs dfs -moveFromLocal localdir /lzl/test
 ```
 
 5、查看文件
+
 ```shell
 hdfs dfs -cat /lzl/test/a.txt
 ```
 
 6、下载文件
+
 ```shell
 hdfs dfs -get /lzl/test/b.txt ./
 ```
 
 7、下载目录
+
 ```shell
 # 本地有 test 目录
 hdfs dfs -copyToLocal /lzl/test ./
 ```
 
 8、删除文件/目录
+
 ```shell
 # -r 递归删除子目录
 hdfs dfs -rm -r /lzl/test
@@ -205,19 +215,22 @@ Usage: hadoop fs [generic options]
 
 [使用手册](https://hadoop.apache.org/docs/r3.1.1/hadoop-project-dist/hadoop-common/FileSystemShell.html)
 
-
 ### haadmin
 
 查看节点状态
+
 ```
 hdfs haadmin -getServiceState nn1
 ```
 
 将 nn1 切换为 Standby 备用节点
+
 ```
 hdfs haadmin -transitionToStandby --forcemanual nn1
 ```
+
 把 active 切换到nn1上。
+
 ```
 hdfs haadmin -failover nn2 nn1
 ```
@@ -235,7 +248,6 @@ Usage: haadmin [-ns <nameserviceId>]
     [-checkHealth <serviceId>]
     [-help <command>]
 ```
-
 
 ### balancer
 
@@ -258,40 +270,35 @@ Usage: hdfs balancer
 
 [设计文档](https://issues.apache.org/jira/browse/HADOOP-1652)
 
-
 ## 日志
-
 
 ### 设置日志级别
 
 临时修改日志级别，无需重启
 
-```
-namenode
+**NameNode**
+
+```bash
 http://bsy-fujian-xiamen-1-172-18-154-201:9870/logLevel
 
-Log Level
+org.apache.commons.logging.impl.Log4JLogger
+BlockStateChange
+org.apache.hadoop.hdfs.StateChange
+```
 
-Results
-Submitted Class Name: org.apache.hadoop.hdfs.StateChange
-Log Class: org.apache.commons.logging.impl.Log4JLogger
-Effective Level: DEBUG
+**DataNode**
 
-datanode
+```bash
 http://bsy-fujian-xiamen-1-172-18-154-201:9864/logLevel
-Log Level
 
-Results
-Submitted Class Name: org.apache.hadoop.hdfs.server.datanode.DataNode
-Log Class: org.apache.commons.logging.impl.Log4JLogger
-Submitted Level: DEBUG
-Setting Level to DEBUG ...
-Effective Level: DEBUG
+org.apache.hadoop.hdfs.server.datanode.DataNode
+org.apache.hadoop.hdfs.server.datanode.IncrementalBlockReportManager
 ```
 
 ### DateNode 心跳超时
 
 NateNode 端日志输出
+
 ```
 2022-12-02 15:22:04,287 INFO org.apache.hadoop.hdfs.StateChange: BLOCK* removeDeadDatanode: lost heartbeat from 172.18.154.201:9866, removeBlocksFromBlockMap true
 2022-12-02 15:22:04,291 INFO org.apache.hadoop.net.NetworkTopology: Removing a node: /default-rack/172.18.154.201:9866
@@ -300,6 +307,7 @@ NateNode 端日志输出
 ### DateNode 注册
 
 NateNode 端日志输出
+
 ```
 2022-12-02 15:26:07,556 INFO org.apache.hadoop.hdfs.StateChange: BLOCK* registerDatanode: from DatanodeRegistration(172.18.154.201:9866, datanodeUuid=126b4743-728d-4800-b5bd-5e83c819fecc, infoPort=9864, infoSecurePort=0, ipcPort=9867, storageInfo=lv=-57;cid=CID-b3746fbe-15c7-4492-9690-29df9fcf4749;nsid=652530984;c=1666691608942) storage 126b4743-728d-4800-b5bd-5e83c819fecc
 2022-12-02 15:26:07,556 INFO org.apache.hadoop.net.NetworkTopology: Removing a node: /default-rack/172.18.154.201:9866
@@ -319,6 +327,7 @@ NateNode 端日志输出
 ### 上传文件
 
 NameNode 端日志输出
+
 ```
 2023-01-03 14:50:13,911 DEBUG org.apache.hadoop.hdfs.StateChange: *DIR* NameNode.create: file /lzl/test/c.txt._COPYING_ for DFSClient_NONMAPREDUCE_-1987862239_1 at 172.18.154.107
 2023-01-03 14:50:13,912 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* NameSystem.startFile: src=/lzl/test/c.txt._COPYING_, holder=DFSClient_NONMAPREDUCE_-1987862239_1, clientMachine=172.18.154.107, createParent=true, replication=2, createFlag=[CREATE, OVERWRITE], blockSize=268435456, supportedVersions=[CryptoProtocolVersion{description='Encryption zones', version=2, unknownValue=null}]
@@ -338,6 +347,7 @@ NameNode 端日志输出
 ```
 
 DataNode 端日志输出
+
 ```
 2023-02-08 17:55:56,576 INFO org.apache.hadoop.hdfs.server.datanode.DataNode: Receiving BP-182789411-172.18.154.107-1666691608942:blk_1073743793_2969 src: /172.18.154.201:37440 dest: /172.18.154.107:9866
 2023-02-08 17:55:56,606 INFO org.apache.hadoop.hdfs.server.datanode.DataNode.clienttrace: src: /172.18.154.201:37440, dest: /172.18.154.107:9866, bytes: 25968, op: HDFS_WRITE, cliID: DFSClient_NONMAPREDUCE_469479046_1, offset: 0, srvID: e9570619-9a17-4c1e-8471-3d044ae9dcd3, blockid: BP-182789411-172.18.154.107-1666691608942:blk_1073743793_2969, duration(ns): 26624471
@@ -348,10 +358,10 @@ DataNode 端日志输出
 
 无日志
 
-
 ### 删除文件
 
 NameNode 端日志输出，移动到回收站
+
 ```
 2023-05-29 22:22:48,191 DEBUG org.apache.hadoop.hdfs.StateChange: *DIR* NameNode.mkdirs: /user/hadoop/.Trash/Current/tmp
 2023-05-29 22:22:48,191 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* NameSystem.mkdirs: /user/hadoop/.Trash/Current/tmp
@@ -361,10 +371,3 @@ NameNode 端日志输出，移动到回收站
 2023-05-29 22:22:48,200 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* FSDirectory.unprotectedRenameTo: /tmp/c.txt is renamed to /user/hadoop/.Trash/Current/tmp/c.txt1685370168196
 2023-05-29 22:22:48,200 INFO org.apache.hadoop.hdfs.server.namenode.FSEditLog: Number of transactions: 8 Total time for transactions(ms): 4 Number of transactions batched in Syncs: 1 Number of syncs: 6 SyncTimes(ms): 140 41
 ```
-
-
-
-``` shell
-sudo -u flume hdfs debug recoverLease -path  /fucheng.wang/crudeoil.hexun.com_202211220000.3.24.k7_haidene.1669046460213.gz -retries 10
-```
-

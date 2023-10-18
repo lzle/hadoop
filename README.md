@@ -49,8 +49,14 @@ $ grep allocate hadoop-hadoop-namenode-dx-lt-yd-zhejiang-jinhua-5-10-104-4-41.lo
 
 ### 执行命令
 
-使用其他用户权限执行命令
+1、使用其他用户权限执行命令
 
 ```
 $ sudo -u hadoop /opt/hadoop/bin/hdfs dfs -du -h /
+```
+
+2、文件未正常关闭，执行 recoverLease
+
+```
+$ sudo -u flume hdfs debug recoverLease -path  /fucheng.wang/crudeoil.hexun.com_202211220000.3.24.k7_haidene.1669046460213.gz -retries 10
 ```
