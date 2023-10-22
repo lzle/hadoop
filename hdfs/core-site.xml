@@ -6,7 +6,7 @@
 <source>core-site.xml</source>
 </property>
 
-<!-- zkfc与zookeeper会话超时时间，防止频繁切主 -->
+<!-- ZKFC 与 zookeeper 会话超时时间，防止频繁切主 -->
 <property>
 <name>ha.zookeeper.session-timeout.ms</name>
 <value>20000</value>
@@ -14,7 +14,7 @@
 <source>core-site.xml</source>
 </property
 
-<!-- zkfc监控namenode健康检查超时的时长 -->
+<!-- ZKFC 监控 NameNode 健康检查超时的时长 -->
 <property>
 <name>ha.health-monitor.rpc-timeout.ms</name>
 <value>45000</value>

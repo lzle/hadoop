@@ -1,4 +1,4 @@
-<!-- 每个DataNode复制副本并发数 -->
+<!-- 每个 DataNode 复制副本并发数 -->
 <property>
 <name>dfs.namenode.replication.max-streams</name>
 <value>6</value>
@@ -27,25 +27,25 @@
 <value>0.32f</value>
 </property>
 
-<!-- 每个心跳删除命令由NameNode发送到DataNode的最大无效块数 -->
+<!-- 每个心跳删除命令由 NameNode 发送到 DataNode 的最大无效块数 -->
 <property>
 <name>dfs.block.invalidate.limit</name>
 <value>16</value>
 </property>
 
-<!-- NameNode处理RPC请求的线程数，建议值ln(number of DataNodes in this HDFS service) * 20 -->
+<!-- NameNode 处理 RPC 请求的线程数，建议值 ln(number of DataNodes in this HDFS service) * 20 -->
 <property>
 <name>dfs.namenode.handler.count</name>
 <value>150</value>
 </property>
 
-<!-- DataNode处理RPC请求的线程数，处理NameNode请求 -->
+<!-- DataNode 处理 RPC 请求的线程数，处理 NameNode 请求 -->
 <property>
 <name>dfs.datanode.handler.count</name>
 <value>10</value>
 </property>
 
-<!-- DataNode处理数据传输的线程数 -->
+<!-- DataNode 处理数据传输的线程数 -->
 <property>
 <name>dfs.datanode.max.transfer.threads</name>
 <value>65535</value>
@@ -57,7 +57,7 @@
 <value>false</value>
 </property>
 
-<!-- 优先筛选更低使用率的DataNode -->
+<!-- 优先筛选更低使用率的 DataNode -->
 <property>
   <name>dfs.block.replicator.classname</name>
   <value>org.apache.hadoop.hdfs.server.blockmanagement.AvailableSpaceBlockPlacementPolicy</value>
@@ -73,7 +73,7 @@
 </property>
 
 
-<!-- FSImageFile存储地址 -->
+<!-- FSImageFile 存储地址 -->
 <property>
 <name>dfs.namenode.name.dir</name>
 <value>/opt/hadoop/data/dfs/nn</value>
@@ -81,7 +81,7 @@
 <source>hdfs-site.xml</source>
 </property>
 
-<!-- EditLogFile存储地址 -->
+<!-- EditLogFile 存储地址 -->
 <property>
 <name>dfs.namenode.edits.dir</name>
 <value>${dfs.namenode.name.dir}</value>
