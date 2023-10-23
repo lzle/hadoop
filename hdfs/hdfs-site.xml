@@ -72,7 +72,6 @@
   </description>
 </property>
 
-
 <!-- FSImageFile 存储地址 -->
 <property>
 <name>dfs.namenode.name.dir</name>
@@ -87,4 +86,21 @@
 <value>${dfs.namenode.name.dir}</value>
 <final>false</final>
 <source>hdfs-default.xml</source>
+</property>
+
+<!-- FSImage 传输超时时间，默认 60s -->
+<property>
+<name>dfs.image.transfer.timeout</name>
+<value>180000</value>
+</property>
+
+<property>
+<name>dfs.namenode.checkpoint.check.period</name>
+<value>180s</value>
+</property>
+
+<!-- 开启FSNlock metrics统计 -->
+<property>
+<name>dfs.namenode.lock.detailed-metrics.enabled</name>
+<value>true</value>
 </property>
