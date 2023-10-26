@@ -2,22 +2,22 @@
 <property>
 <name>fs.trash.interval</name>
 <value>10080</value>
-<final>false</final>
-<source>core-site.xml</source>
 </property>
 
 <!-- ZKFC 与 zookeeper 会话超时时间，防止频繁切主 -->
 <property>
 <name>ha.zookeeper.session-timeout.ms</name>
 <value>20000</value>
-<final>false</final>
-<source>core-site.xml</source>
 </property
 
 <!-- ZKFC 监控 NameNode 健康检查超时的时长 -->
 <property>
 <name>ha.health-monitor.rpc-timeout.ms</name>
 <value>45000</value>
-<final>false</final>
-<source>core-default.xml</source>
+</property>
+
+<!-- 采集更多 rpcProcessing 指标，例如处理延迟 P99 等信息，默认false -->
+<property>
+<name>rpc.metrics.quantile.enable</name>
+<value>true</value>
 </property>
