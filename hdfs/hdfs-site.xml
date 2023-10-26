@@ -109,7 +109,5 @@
 <property>
 <name>dfs.namenode.write-lock-reporting-threshold-ms</name>
 <value>2000</value>
-<final>false</final>
-<source>hdfs-default.xml</source>
 </property>
 
