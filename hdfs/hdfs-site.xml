@@ -99,8 +99,17 @@
 <value>180s</value>
 </property>
 
-<!-- 开启FSNlock metrics统计 -->
+<!-- 开启 FSNlock metrics 统计，可以统计 FSN(Read/Write)LockOperationNameAvgTime、FSN(Read/Write)LockOperationNameNumOps 指标 -->
 <property>
 <name>dfs.namenode.lock.detailed-metrics.enabled</name>
 <value>true</value>
 </property>
+
+<!-- Threshold (ms) for long holding write lock report，默认 5000，可以改 2000，输出更精细 -->
+<property>
+<name>dfs.namenode.write-lock-reporting-threshold-ms</name>
+<value>2000</value>
+<final>false</final>
+<source>hdfs-default.xml</source>
+</property>
+
