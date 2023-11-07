@@ -117,3 +117,12 @@
 <name>dfs.client.socket-timeout</name>
 <value>10000</value>
 </property>
+
+<!-- Block Size 大小 -->
+<property>
+<name>dfs.blocksize</name>
+<value>268435456</value>
+</property>
+
+
+

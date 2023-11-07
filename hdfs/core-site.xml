@@ -21,3 +21,9 @@
 <name>rpc.metrics.quantile.enable</name>
 <value>true</value>
 </property>
+
+<!-- DataNode 执行 du 的间隔时间，默认 10 分钟 -->
+<property>
+<name>fs.du.interval</name>
+<value>600000</value>
+</property>
