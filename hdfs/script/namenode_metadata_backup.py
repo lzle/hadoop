@@ -67,10 +67,17 @@ def upload_to_s3(key, file):
     return resp
 
 
+def clean_dir(dir_path):
+    for file in os.listdir(dir_path):
+        file_path = os.path.join(dir_path, file)
+        if file.endswith(".tar") and os.path.isfile(file_path):
+            os.remove(file_path)
+
+
 if __name__ == "__main__":
     logging.basicConfig(filename=LOG_FILE, level=logging.INFO,
                         format='[%(asctime)s,%(process)d-%(thread)d,%(filename)s,%(lineno)d,%(levelname)s] %(message)s')
-
+    clean_dir("/data/0/")
     meta_dir_paths = ["/opt/hadoop/data/dfs/nn/current", "/data/1/dfs/nn/current/"]
     host_name = get_host_name()
     current_date = get_current_date()
