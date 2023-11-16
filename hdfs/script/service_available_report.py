@@ -21,7 +21,7 @@ HOSTNAME = socket.gethostname()
 # 1M
 FILE_CONTENT = b"A" * 1024 * 1024
 # second
-TIMEOUT = 1
+TIMEOUT = (5, 15)
 HDFS_CLIENT = InsecureClient(HDFS_HOST, user=HDFS_USER, timeout=TIMEOUT)
 
 
@@ -37,37 +37,46 @@ def cost_time(func):
 
 @cost_time
 def put_file():
-    try:
-        with HDFS_CLIENT.write(UPLOAD_FILE_NAME, overwrite=True) as writer:
-            writer.write(FILE_CONTENT)
-        logging.info("Put file %s successfully" % UPLOAD_FILE_NAME)
-        return 200
-    except Exception as e:
-        logging.info("Failed to put file %s!!, message %s" % (UPLOAD_FILE_NAME, repr(e)))
+    count = 0
+    while count < 3:
+        try:
+            with HDFS_CLIENT.write(UPLOAD_FILE_NAME, overwrite=True) as writer:
+                writer.write(FILE_CONTENT)
+            logging.info("Put file %s successfully" % UPLOAD_FILE_NAME)
+            return 200
+        except Exception as e:
+            count += 1
+            logging.info("Failed to put file %s!!, message %s" % (UPLOAD_FILE_NAME, repr(e)))
     return 500
 
 
 @cost_time
 def get_file():
-    try:
-        with HDFS_CLIENT.read(UPLOAD_FILE_NAME) as reader:
-            content = reader.data.decode('utf-8')
-        assert (content == FILE_CONTENT)
-        logging.info("Get file %s successfully" % UPLOAD_FILE_NAME)
-        return 200
-    except Exception as e:
-        logging.info("Failed to get file %s!!, message %s" % (UPLOAD_FILE_NAME, repr(e)))
+    count = 0
+    while count < 3:
+        try:
+            with HDFS_CLIENT.read(UPLOAD_FILE_NAME) as reader:
+                content = reader.data.decode('utf-8')
+            assert (content == FILE_CONTENT)
+            logging.info("Get file %s successfully" % UPLOAD_FILE_NAME)
+            return 200
+        except Exception as e:
+            count += 1
+            logging.info("Failed to get file %s!!, message %s" % (UPLOAD_FILE_NAME, repr(e)))
     return 500
 
 
 @cost_time
 def delete_file():
-    try:
-        HDFS_CLIENT.delete(UPLOAD_FILE_NAME, skip_trash=True)
-        logging.info("Delete file %s successfully" % UPLOAD_FILE_NAME)
-        return 200
-    except Exception as e:
-        logging.info("Failed to delete file %s!!, message %s" % (UPLOAD_FILE_NAME, repr(e)))
+    count = 0
+    while count < 3:
+        try:
+            HDFS_CLIENT.delete(UPLOAD_FILE_NAME, skip_trash=True)
+            logging.info("Delete file %s successfully" % UPLOAD_FILE_NAME)
+            return 200
+        except Exception as e:
+            count += 1
+            logging.info("Failed to delete file %s!!, message %s" % (UPLOAD_FILE_NAME, repr(e)))
     return 500
 
 
