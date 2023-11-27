@@ -47,6 +47,15 @@ $ grep allocate hadoop-hadoop-namenode-dx-lt-yd-zhejiang-jinhua-5-10-104-4-41.lo
 8690 /user/hive/warehouse
 ```
 
+4、统计文件系统目录下文件数
+
+```
+# 新金华
+$ sudo su - hadoop
+$ hdfs dfs -count -h -t '/*'
+```
+
+
 ### 执行命令
 
 1、使用其他用户权限执行命令
