@@ -2,44 +2,86 @@
 
 ## 目录
 
-* [常用命令](#常用命令)
+* [命令](#命令)
+    * [systemd](#systemd)
     * [daemon](#daemon)
     * [dfsadmin](#dfsadmin)
     * [dfs](#dfs)
     * [haadmin](#haadmin)
     * [balancer](#balancer)
+    * [fsck](#fsck)
+
 * [日志](#日志)
-    * [设置日志级别](#设置日志级别)
-    * [DateNode 心跳超时](#DateNode-心跳超时)
-    * [DateNode 注册](#DateNode-注册)
+    * [日志级别](#日志级别)
+    * [心跳超时](#心跳超时)
+    * [注册](#注册)
     * [上传文件](#上传文件)
     * [下载文件](#下载文件)
     * [删除文件](#删除文件)
 
-## 常用命令
+* [相关文档](#相关文档)
+
+## 命令
+
+### systemd
+
+使用 systemd 管理服务
+
+```bash
+$ ll /etc/systemd/system/multi-user.target.wants/datanode.service
+lrwxrwxrwx 1 root root 40 Nov 24 15:20 /etc/systemd/system/multi-user.target.wants/datanode.service -> /usr/lib/systemd/system/datanode.service
+```
+
+查看 datanode.service 文件内容（namenode.service 也是同样的方式）。
+
+```bash
+$ cat /usr/lib/systemd/system/datanode.service
+[Unit]
+Description=datanode
+After=syslog.target network.target
+
+[Service]
+Type=forking
+User=hadoop
+Group=hadoop
+ExecStart=/opt/hadoop/bin/hdfs --daemon start datanode
+ExecStop=/opt/hadoop/bin/hdfs --daemon stop datanode
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+使用命令
+
+```bash
+$ systemctl status datanode
+$ systemctl stop datanode
+$ systemctl start datanode
+```
 
 ### daemon
 
-NameNode 启动/停止
+namenode 启动/停止
 
-```shell
-hdfs --daemon start namenode
-hdfs --daemon stop namenode
-hdfs --daemon status namenode
+```bash
+$ hdfs --daemon start namenode
+$ hdfs --daemon stop namenode
+$ /opt/hadoop/bin/hdfs --daemon status namenode
 ```
 
-DataNode 启动/停止
+datanode 启动/停止
 
-```shell
-hdfs --daemon start datanode
-hdfs --daemon stop datanode
-hdfs --daemon status datanode
+```bash
+$ hdfs --daemon start datanode
+$ hdfs --daemon stop datanode
+$ /opt/hadoop/bin/hdfs --daemon status datanode
 ```
 
-支持的操作如下
+Usage 信息
 
-```shell
-    Daemon Commands:
+```bash
+Daemon Commands:
 
 balancer             run a cluster balancing utility
 datanode             run a DFS datanode
@@ -57,16 +99,23 @@ zkfc                 run the ZK Failover Controller daemon
 
 ### dfsadmin
 
-汇报集群状态
+汇报集群状态，用了查看真实活跃的 datanode 数量。
 
-```shell
-hdfs dfsadmin -report -live
-hdfs dfsadmin -report -dead
+```bash
+$ sudo -u hadoop /opt/hadoop/bin/hdfs dfsadmin -report -live
+$ sudo -u hadoop /opt/hadoop/bin/hdfs dfsadmin -report -dead
 ```
 
-支持的操作如下
+刷新节点，一般用来退役节点，更新 hdfs-exclude。
 
-```shell
+```bash
+$ echo 'decommissioning-hostname' >> /opt/hadoop/etc/hadoop/hdfs-exclude
+$ sudo -u hadoop /opt/hadoop/bin/hdfs dfsadmin -refreshNodes
+```
+
+Usage 信息
+
+```bash
 $ hdfs dfsadmin -h
 Usage: hdfs dfsadmin
 Note: Administrative commands can only be run as the HDFS superuser.
@@ -107,66 +156,70 @@ Note: Administrative commands can only be run as the HDFS superuser.
 	[-help [cmd]]
 ```
 
-[使用手册](https://hadoop.apache.org/docs/r3.1.1/hadoop-project-dist/hadoop-hdfs/HDFSCommands.html#dfsadmin)
-
 ### dfs
 
 1、创建目录
 
-```shell
-hdfs dfs -mkdir -p /lzl/test
+```bash
+$ hdfs dfs -mkdir -p /lzl/test
 ```
 
-2、从本地上次文件
+2、从本地上传文件
 
-```shell
-hdfs dfs -put a.txt /lzl/test
+```bash
+$ hdfs dfs -put a.txt /lzl/test
 ```
 
 3、从本地上传目录
 
-```shell
-hdfs dfs -copyFromLocal localdir /lzl/test
+```bash
+$ hdfs dfs -copyFromLocal localdir /lzl/test
 
 # 两者效果不一样
-hdfs dfs -copyFromLocal localdir/* /lzl/test
+$ hdfs dfs -copyFromLocal localdir/* /lzl/test
 ```
 
 4、上传本地目录并删除
 
-```shell
-hdfs dfs -moveFromLocal localdir /lzl/test
+```bash
+$ hdfs dfs -moveFromLocal localdir /lzl/test
 ```
 
 5、查看文件
 
-```shell
-hdfs dfs -cat /lzl/test/a.txt
+```bash
+$ hdfs dfs -cat /lzl/test/a.txt
 ```
 
 6、下载文件
 
-```shell
-hdfs dfs -get /lzl/test/b.txt ./
+```bash
+$ hdfs dfs -get /lzl/test/b.txt ./
 ```
 
 7、下载目录
 
-```shell
+```bash
 # 本地有 test 目录
-hdfs dfs -copyToLocal /lzl/test ./
+$ hdfs dfs -copyToLocal /lzl/test ./
 ```
 
 8、删除文件/目录
 
-```shell
+```bash
 # -r 递归删除子目录
-hdfs dfs -rm -r /lzl/test
+$ hdfs dfs -rm -r /lzl/test
 ```
 
-支持的操作如下
+9、查看压缩文件内容
 
-```shell
+```bash
+$ hdfs dfs -text /lzl/test.gz
+```
+
+Usage 信息如下
+
+```bash
 $ hdfs dfs -h
 Usage: hadoop fs [generic options]
 	[-appendToFile <localsrc> ... <dst>]
@@ -213,31 +266,38 @@ Usage: hadoop fs [generic options]
 	[-usage [cmd ...]]
 ```
 
-[使用手册](https://hadoop.apache.org/docs/r3.1.1/hadoop-project-dist/hadoop-common/FileSystemShell.html)
-
 ### haadmin
 
 查看节点状态
 
-```
-hdfs haadmin -getServiceState nn1
-```
-
-将 nn1 切换为 Standby 备用节点
-
-```
-hdfs haadmin -transitionToStandby --forcemanual nn1
+```bash
+$ hdfs haadmin -getServiceState nn1
 ```
 
-把 active 切换到nn1上。
+将 nn1 切换为 standby 备用节点
 
+```bash
+$ hdfs haadmin -transitionToStandby --forcemanual nn1
 ```
-hdfs haadmin -failover nn2 nn1
+
+把 active 切换到 nn1 上
+
+```bash
+$ sudo -u hadoop /opt/hadoop/bin/hdfs haadmin -failover nn2 nn1
 ```
 
-支持的操作如下
+查看 namenode 状态
 
-```shell
+```bash
+$ hdfs haadmin -getAllServiceState
+dx-lt-yd-hebei-shijiazhuang-10-10-103-1-34:8020    active
+dx-lt-yd-hebei-shijiazhuang-10-10-103-2-160:8020   standby
+dx-lt-yd-hebei-shijiazhuang-10-10-103-2-25:8020    standby
+```
+
+Usage 信息如下
+
+```bash
 $ hdfs  haadmin
 Usage: haadmin [-ns <nameserviceId>]
     [-transitionToActive [--forceactive] <serviceId>]
@@ -251,9 +311,9 @@ Usage: haadmin [-ns <nameserviceId>]
 
 ### balancer
 
-支持的操作如下
+数据平衡工具，Usage 信息
 
-```shell
+```bash
 $ hdfs  balancer -h
 Usage: hdfs balancer
 	[-policy <policy>]	the balancing policy: datanode or blockpool
@@ -266,15 +326,167 @@ Usage: hdfs balancer
 	[-runDuringUpgrade]	Whether to run the balancer during an ongoing HDFS upgrade.This is usually not desired since it will not affect used space on over-utilized machines.
 ```
 
-[使用手册](https://hadoop.apache.org/docs/r3.1.1/hadoop-project-dist/hadoop-hdfs/HDFSCommands.html#balancer)
+### fsck
 
-[设计文档](https://issues.apache.org/jira/browse/HADOOP-1652)
+查看文件目录的健康信息、状态、块报告、文件中损坏的块等。它旨在报告各种文件的问题。
+
+1、检查目录下或文件是否存在损坏的 block
+
+```bash
+$ hdfs fsck -fs hdfs://dx-lt-yd-zhejiang-jinhua-5-10-104-4-41:8020/ /data  -list-corruptfileblocks
+Connecting to namenode via http://dx-lt-yd-zhejiang-jinhua-5-10-104-4-41:9870/fsck?ugi=hadoop&listcorruptfileblocks=1&path=%2Ftmp
+The filesystem under path '/data' has 0 CORRUPT files
+```
+
+2、检查目录下或文件是否处于 openforwrite 状态
+
+```bash
+hdfs fsck -fs hdfs://dx-lt-yd-zhejiang-jinhua-5-10-104-4-41:8020/ /data -openforwrite
+```
+
+3、检查文件的基本信息，HEALTHY 表示文件正常
+
+```bash
+$ hdfs fsck -fs hdfs://dx-lt-yd-zhejiang-jinhua-5-10-104-4-41:8020/ /tmp/fsck-file
+Connecting to namenode via http://dx-lt-yd-zhejiang-jinhua-5-10-104-4-41:9870/fsck?ugi=hadoop&path=%2Ftmp%2Ffsck-file
+FSCK started by hadoop (auth:SIMPLE) from /10.104.4.41 for path /tmp/fsck-file at Mon Dec 04 01:14:39 CST 2023
+
+Status: HEALTHY
+ Number of data-nodes:	207
+ Number of racks:		1
+ Total dirs:			0
+ Total symlinks:		0
+
+Replicated Blocks:
+ Total size:	2188 B
+ Total files:	1
+ Total blocks (validated):	1 (avg. block size 2188 B)
+ Minimally replicated blocks:	1 (100.0 %)
+ Over-replicated blocks:	0 (0.0 %)
+ Under-replicated blocks:	0 (0.0 %)
+ Mis-replicated blocks:		0 (0.0 %)
+ Default replication factor:	3
+ Average block replication:	3.0
+ Missing blocks:		0
+ Corrupt blocks:		0
+ Missing replicas:		0 (0.0 %)
+
+Erasure Coded Block Groups:
+    ......
+FSCK ended at Mon Dec 04 01:14:39 CST 2023 in 0 milliseconds
+
+
+The filesystem under path '/tmp/fsck-file' is HEALTHY
+```
+
+4、输出文件 block 信息，包含 blockid
+
+```bash
+$ hdfs fsck -fs hdfs://dx-lt-yd-zhejiang-jinhua-5-10-104-4-41:8020/ /tmp/fsck-file -files -blocks
+Connecting to namenode via http://dx-lt-yd-zhejiang-jinhua-5-10-104-4-41:9870/fsck?ugi=hadoop&files=1&blocks=1&path=%2Ftmp%2Ffsck-file
+FSCK started by hadoop (auth:SIMPLE) from /10.104.4.41 for path /tmp/fsck-file at Mon Dec 04 01:23:40 CST 2023
+/tmp/fsck-file 2188 bytes, replicated: replication=3, 1 block(s):  OK
+0. BP-1637949269-10.104.5.12-1683817104974:blk_1961802534_888879227 len=2188 Live_repl=3
+
+.....
+
+The filesystem under path '/tmp/fsck-file' is HEALTHY
+```
+
+打印目录下所有的 block 信息
+
+```bash
+$ hdfs fsck  -fs hdfs://dx-lt-yd-zhejiang-jinhua-5-10-104-4-41:8020/ /tmp -files -blocks
+/tmp/logs/flume/logs/application_1693785702620_63669/dx-lt-yd-zhejiang-jinhua-5-10-104-3-15_45454 31496 bytes, replicated: replication=3, 1 block(s):  OK
+0. BP-1637949269-10.104.5.12-1683817104974:blk_1960221891_887297971 len=31496 Live_repl=3
+
+/tmp/logs/flume/logs/application_1693785702620_63669/dx-lt-yd-zhejiang-jinhua-5-10-104-3-160_45454 32528 bytes, replicated: replication=3, 1 block(s):  OK
+0. BP-1637949269-10.104.5.12-1683817104974:blk_1960221899_887297979 len=32528 Live_repl=3
+```
+
+5、除了输出 4 以外，输出对应的 datanode 节点
+
+```bash
+ hdfs fsck -fs hdfs://dx-lt-yd-zhejiang-jinhua-5-10-104-4-41:8020/ /tmp/fsck-file -files -blocks -locations
+Connecting to namenode via http://dx-lt-yd-zhejiang-jinhua-5-10-104-4-41:9870/fsck?ugi=hadoop&files=1&blocks=1&locations=1&path=%2Ftmp%2Ffsck-file
+FSCK started by hadoop (auth:SIMPLE) from /10.104.4.41 for path /tmp/fsck-file at Mon Dec 04 01:26:26 CST 2023
+/tmp/fsck-file 2188 bytes, replicated: replication=3, 1 block(s):  OK
+0. BP-1637949269-10.104.5.12-1683817104974:blk_1961802534_888879227 len=2188 Live_repl=3  [DatanodeInfoWithStorage[10.104.1.41:9866,DS-8d0c78ab-0dfa-48ac-a003-e9250e3c65ef,DISK], 
+DatanodeInfoWithStorage[10.104.2.146:9866,DS-291037f4-3ee7-4323-a2c1-3fa147b3764d,DISK], DatanodeInfoWithStorage[10.104.8.26:9866,DS-7cc409c7-3ce8-4b04-bc38-29e01d765c60,DISK]]
+```
+
+6、根据 BlockID 输出对应的文件信息
+
+不包含 generationStamp
+
+```bash
+$ hdfs fsck -fs hdfs://dx-lt-yd-zhejiang-jinhua-5-10-104-4-41:8020/ -blockId blk_1961802534
+Connecting to namenode via http://dx-lt-yd-zhejiang-jinhua-5-10-104-4-41:9870/fsck?ugi=hadoop&blockId=blk_1961802534+&path=%2F
+FSCK started by hadoop (auth:SIMPLE) from /10.104.4.41 at Mon Dec 04 01:30:34 CST 2023
+
+Block Id: blk_1961802534
+Block belongs to: /tmp/fsck-file
+No. of Expected Replica: 3
+No. of live Replica: 3
+No. of excess Replica: 0
+No. of stale Replica: 0
+No. of decommissioned Replica: 0
+No. of decommissioning Replica: 0
+No. of corrupted Replica: 0
+Block replica on datanode/rack: dx-lt-yd-zhejiang-jinhua-5-10-104-8-26/default-rack is HEALTHY
+Block replica on datanode/rack: dx-lt-yd-zhejiang-jinhua-5-10-104-2-146/default-rack is HEALTHY
+Block replica on datanode/rack: dx-lt-yd-zhejiang-jinhua-5-10-104-1-41/default-rack is HEALTHY
+```
+
+包含 generationStamp 需要在 blockid 加上 `.meta` 后缀
+
+```bash
+hdfs fsck  -fs hdfs://dx-lt-yd-zhejiang-jinhua-5-10-104-4-41:8020/ -blockId blk_1961802534_888879227.meta
+Connecting to namenode via http://dx-lt-yd-zhejiang-jinhua-5-10-104-4-41:9870/fsck?ugi=hadoop&blockId=blk_1961802534_888879227.meta+&path=%2F
+FSCK started by hadoop (auth:SIMPLE) from /10.104.4.41 at Mon Dec 04 01:39:44 CST 2023
+
+Block Id: blk_1961802534_888879227.meta
+Block belongs to: /tmp/fsck-file
+No. of Expected Replica: 3
+No. of live Replica: 3
+No. of excess Replica: 0
+No. of stale Replica: 0
+No. of decommissioned Replica: 0
+No. of decommissioning Replica: 0
+No. of corrupted Replica: 0
+Block replica on datanode/rack: dx-lt-yd-zhejiang-jinhua-5-10-104-8-26/default-rack is HEALTHY
+Block replica on datanode/rack: dx-lt-yd-zhejiang-jinhua-5-10-104-2-146/default-rack is HEALTHY
+Block replica on datanode/rack: dx-lt-yd-zhejiang-jinhua-5-10-104-1-41/default-rack is HEALTHY
+```
+
+Usage 信息
+
+```bash
+$ hdfs fsck
+Usage: hdfs fsck <path> [-list-corruptfileblocks | [-move | -delete | -openforwrite] [-files [-blocks [-locations | -racks | -replicaDetails | -upgradedomains]]]] [-includeSnapshots] [-showprogress] [-storagepolicies] [-maintenance] [-blockId <blk_Id>]
+	<path>	start checking from this path
+	-move	move corrupted files to /lost+found
+	-delete	delete corrupted files
+	-files	print out files being checked
+	-openforwrite	print out files opened for write
+	-includeSnapshots	include snapshot data if the given path indicates a snapshottable directory or there are snapshottable directories under it
+	-list-corruptfileblocks	print out list of missing blocks and files they belong to
+	-files -blocks	print out block report
+	-files -blocks -locations	print out locations for every block
+	-files -blocks -racks	print out network topology for data-node locations
+	-files -blocks -replicaDetails	print out each replica details
+	-files -blocks -upgradedomains	print out upgrade domains for every block
+	-storagepolicies	print out storage policy summary for the blocks
+	-maintenance	print out maintenance state node details
+	-showprogress	show progress in output. Default is OFF (no progress)
+	-blockId	print out which file this blockId belongs to, locations (nodes, racks) of this block, and other diagnostics info (under replicated, corrupted or not, etc)
+```
 
 ## 日志
 
-### 设置日志级别
+### 日志级别
 
-临时修改日志级别，无需重启
+动态修改日志级别，无需重启，重启后失效
 
 **NameNode**
 
@@ -295,18 +507,18 @@ org.apache.hadoop.hdfs.server.datanode.DataNode
 org.apache.hadoop.hdfs.server.datanode.IncrementalBlockReportManager
 ```
 
-### DateNode 心跳超时
+### 心跳超时
 
-NateNode 端日志输出
+datanode 端日志输出
 
 ```
 2022-12-02 15:22:04,287 INFO org.apache.hadoop.hdfs.StateChange: BLOCK* removeDeadDatanode: lost heartbeat from 172.18.154.201:9866, removeBlocksFromBlockMap true
 2022-12-02 15:22:04,291 INFO org.apache.hadoop.net.NetworkTopology: Removing a node: /default-rack/172.18.154.201:9866
 ```
 
-### DateNode 注册
+### 注册
 
-NateNode 端日志输出
+namenode 端日志输出
 
 ```
 2022-12-02 15:26:07,556 INFO org.apache.hadoop.hdfs.StateChange: BLOCK* registerDatanode: from DatanodeRegistration(172.18.154.201:9866, datanodeUuid=126b4743-728d-4800-b5bd-5e83c819fecc, infoPort=9864, infoSecurePort=0, ipcPort=9867, storageInfo=lv=-57;cid=CID-b3746fbe-15c7-4492-9690-29df9fcf4749;nsid=652530984;c=1666691608942) storage 126b4743-728d-4800-b5bd-5e83c819fecc
@@ -326,7 +538,7 @@ NateNode 端日志输出
 
 ### 上传文件
 
-NameNode 端日志输出
+namenode 端日志输出
 
 ```
 2023-01-03 14:50:13,911 DEBUG org.apache.hadoop.hdfs.StateChange: *DIR* NameNode.create: file /lzl/test/c.txt._COPYING_ for DFSClient_NONMAPREDUCE_-1987862239_1 at 172.18.154.107
@@ -346,7 +558,7 @@ NameNode 端日志输出
 2023-01-03 14:50:14,298 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* FSDirectory.unprotectedRenameTo: /lzl/test/c.txt._COPYING_ is renamed to /lzl/test/c.txt
 ```
 
-DataNode 端日志输出
+datanode 端日志输出
 
 ```
 2023-02-08 17:55:56,576 INFO org.apache.hadoop.hdfs.server.datanode.DataNode: Receiving BP-182789411-172.18.154.107-1666691608942:blk_1073743793_2969 src: /172.18.154.201:37440 dest: /172.18.154.107:9866
@@ -360,7 +572,7 @@ DataNode 端日志输出
 
 ### 删除文件
 
-NameNode 端日志输出，移动到回收站
+namenode 端日志输出，移动到回收站
 
 ```
 2023-05-29 22:22:48,191 DEBUG org.apache.hadoop.hdfs.StateChange: *DIR* NameNode.mkdirs: /user/hadoop/.Trash/Current/tmp
@@ -371,3 +583,9 @@ NameNode 端日志输出，移动到回收站
 2023-05-29 22:22:48,200 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* FSDirectory.unprotectedRenameTo: /tmp/c.txt is renamed to /user/hadoop/.Trash/Current/tmp/c.txt1685370168196
 2023-05-29 22:22:48,200 INFO org.apache.hadoop.hdfs.server.namenode.FSEditLog: Number of transactions: 8 Total time for transactions(ms): 4 Number of transactions batched in Syncs: 1 Number of syncs: 6 SyncTimes(ms): 140 41
 ```
+
+## 相关文档
+
+[HDFS Commands Guide](https://hadoop.apache.org/docs/r3.1.1/hadoop-project-dist/hadoop-hdfs/HDFSCommands.html)
+
+[Rebalance Design](https://issues.apache.org/jira/browse/HADOOP-1652)
