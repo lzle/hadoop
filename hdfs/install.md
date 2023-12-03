@@ -361,7 +361,7 @@ hdfs --daemon start journalnode
 
 上面的步骤把 HDFS 搭建完毕，可以通过 namenode 的 9870 端口进行管理页面访问验证。
 
-![namenode_web.png](image/namenode_web.png)
+![namenode_web.png](images/namenode_web.png)
 
 
 ### 10、文件操作
