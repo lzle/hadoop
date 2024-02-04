@@ -1,22 +1,20 @@
 # 问题追踪
 
-
 ## 目录
 
 * [NameNode 频繁切主](#NameNode-频繁切主)
     * [HealthMonitor 检查超时](#HealthMonitor-检查超时)
     * [ZooKeeper 会话超时](#ZooKeeper-会话超时)
 * [Block not COMPLETE](#Block-not-COMPLETE)
+* [文件未正常关闭](#文件未正常关闭)
 
 ## NameNode 频繁切主
 
-目前 NameNode 使用了 HA 的部署模式，但系统会经常出现 HA 的自动切换（NameNode 节点其实正常）。
-经过调研发现可能的原因如下：
+目前 NameNode 使用了 HA 的部署模式，但系统会经常出现 HA 的自动切换（NameNode 节点其实正常）。 经过调研发现可能的原因如下：
 
 1、ZKFC 服务的 HealthMonitor 线程 check 本地 NameNode 的 RPC 端口时超时，导致 HealthMonitor 认为 NameNode 挂掉。
 
 2、ZKFC 服务连接 ZooKeeper 上的 session timeout，导致丢掉当前持有的 active 锁（temp节点），引起自动切换。
-
 
 ### HealthMonitor 检查超时
 
@@ -133,7 +131,6 @@ org.apache.hadoop.ipc.Server$Handler.run(Server.java:2678)
 </property>
 ```
 
-
 ### ZooKeeper 会话超时
 
 ZooKeeper failover 的 session 超时设置为 20000ms （默认5000ms）。
@@ -193,7 +190,13 @@ NameNode 服务打开 BlockStateChange DEBUG 级别日志，过滤日志中 Bloc
 2023-10-23 19:15:54,010 INFO org.apache.hadoop.hdfs.server.datanode.DataNode: Took 11109ms to process 1 commands from NN
 ```
 
+## 文件未正常关闭
 
+文件未正常关闭，执行 recoverLease
+
+```
+[root@dx-lt-yd-zhejiang-jinhua-5-10-104-6-156 hadoop-hdfs]#  sudo -u flume hdfs debug recoverLease -path  /fucheng.wang/crudeoil.hexun.com_202211220000.3.24.k7_haidene.1669046460213.gz -retries 10
+```
 
 
 
