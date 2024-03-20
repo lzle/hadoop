@@ -9,7 +9,7 @@ import threading
 import Queue
 
 HDFS_USER = "root"
-HDFS_HOST = "http://10.111.20.33:9870"
+HDFS_HOST = "http://10.104.4.41:9870"
 LOG_FILE = "/var/log/hdfs/check_gzip_file_error.log"
 
 # second
@@ -65,6 +65,7 @@ if __name__ == '__main__':
     logging.basicConfig(filename=LOG_FILE, level=logging.INFO,
                         format='[%(asctime)s,%(process)d-%(thread)d,%(filename)s,%(lineno)d,%(levelname)s] %(message)s')
 
+    logging.info("start")
     result_queue = Queue.Queue(maxsize=1000)
 
     threads = []
@@ -73,15 +74,22 @@ if __name__ == '__main__':
         threads.append(thread)
         thread.start()
 
-    count = 0
-    for fitem in list_files_recursive('/separated_tengine/v9.tiktokcdn.com'):
-        dir, finfo = fitem[0], fitem[1]
-        path = dir + '/' + finfo[0].encode('utf-8')
-        print(count)
-        if path.startswith("/separated_tengine/v9.tiktokcdn.com/2024020106"):
+    # count = 0
+    # for fitem in list_files_recursive('/separated_tengine/storedl5.heytapdownload.com-bschannel-2'):
+    #     dir, finfo = fitem[0], fitem[1]
+    #     path = dir + '/' + finfo[0].encode('utf-8')
+    #     print(count)
+    #     if path.startswith("/separated_tengine/storedl5.heytapdownload.com-bschannel-2/2024020806"):
+    #         print(path)
+    #         result_queue.put(path)
+    #     count += 1
+
+    with open('check_gzip_text', 'rw') as file:
+        for line in file:
+            path = line.strip()
             print(path)
             result_queue.put(path)
-        count += 1
+
 
     while not result_queue.empty():
         time.sleep(1)
