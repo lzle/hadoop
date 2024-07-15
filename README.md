@@ -7,6 +7,7 @@
     * [统计文件数&容量](#统计文件数量和容量)
     * [metric](#metric)
     * [文件时间](#文件时间)
+    * [移动文件](#移动文件)
 * [命令](#命令)
     * [systemd](#systemd)
     * [daemon](#daemon)
@@ -22,6 +23,7 @@
     * [上传文件](#上传文件)
     * [下载文件](#下载文件)
     * [删除文件](#删除文件)
+    * [写锁](#写锁)
 * [问题](#问题)
     * [NameNode 频繁切主](#NameNode-频繁切主)
         * [HealthMonitor 检查超时](#HealthMonitor-检查超时)
@@ -160,6 +162,12 @@ $ hdfs dfs -ls /tmp/
 -rwxrwxrwx   2 hadoop supergroup    1048582 2023-11-02 14:28 /tmp/10M
 -rwxrwxrwx   2 hadoop supergroup    1048582 2023-11-02 14:46 /tmp/1M
 -rw-r--r--   2 hdfs   supergroup       1861 2024-02-04 15:11 /tmp/bsy-fujian-xiamen-1-172-18-154-107_1707030392.91.file
+```
+
+### 移动文件
+
+```
+$ sudo -u hadoop /opt/hadoop/bin/hdfs dfs -mv /separated_ict/st-bak.dl.vycloud.vip/20240712* /separated_ict_backup/st-bak.dl.vycloud.vip/20240712/
 ```
 
 ## 命令
@@ -723,6 +731,22 @@ namenode 端日志输出，移动到回收站
 2023-05-29 22:22:48,200 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* FSDirectory.renameTo: /tmp/c.txt to /user/hadoop/.Trash/Current/tmp/c.txt1685370168196
 2023-05-29 22:22:48,200 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* FSDirectory.unprotectedRenameTo: /tmp/c.txt is renamed to /user/hadoop/.Trash/Current/tmp/c.txt1685370168196
 2023-05-29 22:22:48,200 INFO org.apache.hadoop.hdfs.server.namenode.FSEditLog: Number of transactions: 8 Total time for transactions(ms): 4 Number of transactions batched in Syncs: 1 Number of syncs: 6 SyncTimes(ms): 140 41
+```
+
+### 写锁
+
+namenode 端日志输出
+
+```
+[root@dx-lt-yd-zhejiang-jinhua-5-10-104-4-41 hadoop]# grep -rn "FSNamesystem write lock held" hadoop-hadoop-namenode-dx-lt-yd-zhejiang-jinhua-5-10-104-4-41.*
+hadoop-hadoop-namenode-dx-lt-yd-zhejiang-jinhua-5-10-104-4-41.log:33372:2024-07-15 11:16:43,924 INFO org.apache.hadoop.hdfs.server.namenode.FSNamesystem: FSNamesystem write lock held for 11966 ms via java.lang.Thread.getStackTrace(Thread.java:1559)
+hadoop-hadoop-namenode-dx-lt-yd-zhejiang-jinhua-5-10-104-4-41.log.1:580127:2024-07-15 11:13:34,160 INFO org.apache.hadoop.hdfs.server.namenode.FSNamesystem: FSNamesystem write lock held for 5665 ms via java.lang.Thread.getStackTrace(Thread.java:1559)
+hadoop-hadoop-namenode-dx-lt-yd-zhejiang-jinhua-5-10-104-4-41.log.100:118884:2024-07-14 20:12:24,745 INFO org.apache.hadoop.hdfs.server.namenode.FSNamesystem: FSNamesystem write lock held for 10207 ms via java.lang.Thread.getStackTrace(Thread.java:1559)
+hadoop-hadoop-namenode-dx-lt-yd-zhejiang-jinhua-5-10-104-4-41.log.100:791722:2024-07-14 20:19:57,180 INFO org.apache.hadoop.hdfs.server.namenode.FSNamesystem: FSNamesystem write lock held for 16606 ms via java.lang.Thread.getStackTrace(Thread.java:1559)
+hadoop-hadoop-namenode-dx-lt-yd-zhejiang-jinhua-5-10-104-4-41.log.100:896340:2024-07-14 20:21:17,531 INFO org.apache.hadoop.hdfs.server.namenode.FSNamesystem: FSNamesystem write lock held for 7541 ms via java.lang.Thread.getStackTrace(Thread.java:1559)
+hadoop-hadoop-namenode-dx-lt-yd-zhejiang-jinhua-5-10-104-4-41.log.14:744456:2024-07-15 09:36:45,901 INFO org.apache.hadoop.hdfs.server.namenode.FSNamesystem: FSNamesystem write lock held for 8511 ms via java.lang.Thread.getStackTrace(Thread.java:1559)
+hadoop-hadoop-namenode-dx-lt-yd-zhejiang-jinhua-5-10-104-4-41.log.15:162524:2024-07-15 09:29:26,556 INFO org.apache.hadoop.hdfs.server.namenode.FSNamesystem: FSNamesystem write lock held for 18014 ms via java.lang.Thread.getStackTrace(Thread.java:1559)
+hadoop-hadoop-namenode-dx-lt-yd-zhejiang-jinhua-5-10-104-4-41.log.15:671008:2024-07-15 09:32:20,644 INFO org.apache.hadoop.hdfs.server.namenode.FSNamesystem: FSNamesystem write lock held for 20715 ms via java.lang.Thread.getStackTrace(Thread.java:1559)
 ```
 
 ## 问题
