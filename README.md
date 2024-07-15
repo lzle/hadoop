@@ -25,11 +25,6 @@
     * [删除文件](#删除文件)
     * [写锁](#写锁)
 * [问题](#问题)
-    * [NameNode 频繁切主](#NameNode-频繁切主)
-        * [HealthMonitor 检查超时](#HealthMonitor-检查超时)
-        * [ZooKeeper 会话超时](#ZooKeeper-会话超时)
-    * [Block not COMPLETE](#Block-not-COMPLETE)
-    * [文件未正常关闭](#文件未正常关闭)
 * [相关文档](#相关文档)
 
 ## 常用
