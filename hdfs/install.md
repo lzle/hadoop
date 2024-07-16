@@ -357,6 +357,12 @@ hdfs --daemon start journalnode
 [hadoop@bsy-fujian-xiamen-1-172-18-154-107 ~]$ tail -10 /opt/hadoop/logs/hadoop-hadoop-datanode-bsy-fujian-xiamen-1-172-18-154-107.log
 ```
 
+访问 datanode 的 9864 端口管理页面访问
+
+```
+http://sg-singapore-singapore-28-10-111-20-22:9864/datanode.html
+```
+
 ### 9、管理平台
 
 上面的步骤把 HDFS 搭建完毕，可以通过 namenode 的 9870 端口进行管理页面访问验证。
