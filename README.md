@@ -748,7 +748,7 @@ hadoop-hadoop-namenode-dx-lt-yd-zhejiang-jinhua-5-10-104-4-41.log.15:671008:2024
 
 [问题追踪](hdfs/troubleshooting.md)
 
-### 1、默认 Block Size 的大小
+### 1、默认 Block Size 的大小？
 
 金华 HDFS 集群 128M，石家庄、喜鹊、海外 HDFS 集群 256M，默认 128M
 
@@ -761,7 +761,7 @@ hadoop-hadoop-namenode-dx-lt-yd-zhejiang-jinhua-5-10-104-4-41.log.15:671008:2024
 </property>
 ```
 
-### 2、不同客户端并发上传，会有什么效果
+### 2、不同客户端并发上传相同文件，会有什么效果？
 
 客户端 10.104.4.41
 ```

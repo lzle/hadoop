@@ -1,24 +1,50 @@
-# NameNode
+# 源码分析
 
 
 ## 目录
 
-* [ClientProtocol 实现](#ClientProtocol-实现)
-    * [创建文件](#创建文件)
-    * [创建数据块](#创建数据块)
+* [NameNode](#NameNode)
+    * [文件操作](#文件操作)
+      * [创建文件](#创建文件)
+    * [块操作](#块操作)
+      * [创建数据块](#创建数据块)
 
 
+# NameNode
 
+## 文件操作
 
-## ClientProtocol 实现
-
-介绍 ClientProtocol 中与读写相关的方法在Namenode 中的实现，包括创建文件、追加写文件、创建新的数据块、放弃数据块以及关闭文件等操作。
+接下来主要介绍 Namenode 文件操作的相关实现，包括创建文件、追加写文件、创建新的数据块、放弃数据块以及关闭文件等操作。
 
 ### 创建文件
 
-客户端通过调用 ClientProtocol.create()方法创建一个新的文件，这个调用由 NamenodeRpcServer.create()方法响应。
+客户端通过调用 ClientProtocol.create() 方法创建一个新的文件，这个调用由 NamenodeRpcServer.create() 方法响应。
+create() 方法会调用 FSNamesystem.startFileInt()，startFileInt() 方法会级联调用 FSDirWriteFileOp.startFile() 来创
+建一个新的文件。
+
+文件一旦被创建，它对其他客户端是可见的，并且可以被读取。然而，在文件完成或者因为租约到期而明确标记为完成之前，
+其他客户端不能删除、重新创建或重命名该文件。
 
 ```java
+// ClientProtocol.java
+
+/**
+ * Create a new file entry in the namespace.
+ * <p>
+ * This will create an empty file specified by the source path.
+ * The path should reflect a full path originated at the root.
+ * The name-node does not have a notion of "current" directory for a client.
+ * <p>
+ * Once created, the file is visible and available for read to other clients.
+ * Although, other clients cannot {@link #delete(String, boolean)}, re-create
+ * or {@link #rename(String, String)} it until the file is completed
+ * or explicitly as a result of lease expiration.
+ * <p>
+ * Blocks have a maximum size.  Clients that intend to create
+ * multi-block files must also use
+ * {@link #addBlock}
+ */
+
 @AtMostOnce
 HdfsFileStatus create(String src, FsPermission masked,
     String clientName, EnumSetWritable<CreateFlag> flag,
@@ -27,24 +53,163 @@ HdfsFileStatus create(String src, FsPermission masked,
     throws IOException;
 ```
 
-首先看一下方法中重要的参数：
+主要参数：
 
-* 标志位 flag：overwrite 用于指示如果目标文件 src 已经存在了，是否覆盖这个文件；create 用于指示 src 文件不存在时，是否创建这个文件；
-* replication 表示副本数；blockSize 表示块的大小；
+* flag 标记位 CREATE|APPEND|OVERWRITE，overwrite 表示文件存在时是否覆盖；
+* replication 表示副本数；
+* blockSize 表示块的大小；
 * createParent 用于指示目标文件的父目录不存在时，是否创建目录。
 
-
-参数对应的几点注意事项如下：
+基本流程如下：
 ```
-1、 如果父目录不存在，createParent 为 True 时表示创建，否则抛出异常；
+1、获取全局锁 FSNamesystemLock 和 目录锁 dirLock；
 
-2、 如果文件已经存在，并且要覆盖写文件，则 FSDirectory.delete() 从文件系统目录树中删除这个文件，
-然后调用 fsn.removeLeasesAndINodes 方法删除租约和 INode；
+2、判断文件是否存在，如果存在并要覆盖写文件，会执行 FSDirectory.delete() 从文件系统 fsDirectory 和 inodeMap 中删除这个文件，
+然后调用 fsn.removeLeasesAndINodes 方法删除租约；
 
-3、 在目标文件路径上创建一个 INodeFileUnderConstruction 对象并插入目录树，之后在租约管理器中添加租约。
+3、在目标文件路径上创建一个新的 Node，添加到 fsDirectory 和 inodeMap 中，在租约管理器中添加租约。
 ```
 
-代码
+NamenodeRpcServer.create() 方法：
+
+``` java
+@Override // ClientProtocol
+public HdfsFileStatus create(String src, FsPermission masked,
+    String clientName, EnumSetWritable<CreateFlag> flag,
+    boolean createParent, short replication, long blockSize,
+    CryptoProtocolVersion[] supportedVersions, String ecPolicyName)
+    throws IOException {
+  checkNNStartup();
+  String clientMachine = getClientMachine();
+  if (stateChangeLog.isDebugEnabled()) {
+    stateChangeLog.debug("*DIR* NameNode.create: file "
+        +src+" for "+clientName+" at "+clientMachine);
+  }
+  if (!checkPathLength(src)) {
+    throw new IOException("create: Pathname too long.  Limit "
+        + MAX_PATH_LENGTH + " characters, " + MAX_PATH_DEPTH + " levels.");
+  }
+  namesystem.checkOperation(OperationCategory.WRITE);
+  CacheEntryWithPayload cacheEntry = RetryCache.waitForCompletion(retryCache, null);
+  if (cacheEntry != null && cacheEntry.isSuccess()) {
+    return (HdfsFileStatus) cacheEntry.getPayload();
+  }
+
+  HdfsFileStatus status = null;
+  try {
+    PermissionStatus perm = new PermissionStatus(getRemoteUser()
+        .getShortUserName(), null, masked);
+    status = namesystem.startFile(src, perm, clientName, clientMachine,
+        flag.get(), createParent, replication, blockSize, supportedVersions,
+        ecPolicyName, cacheEntry != null);
+  } finally {
+    RetryCache.setState(cacheEntry, status != null, status);
+  }
+
+  metrics.incrFilesCreated();
+  metrics.incrCreateFileOps();
+  return status;
+}
+```
+
+FSNamesystem.startFileInt 方法：
+
+```java
+/**
+  * Create a new file entry in the namespace.
+  * 
+  * For description of parameters and exceptions thrown see
+  * {@link ClientProtocol#create}, except it returns valid file status upon
+  * success
+  */
+HdfsFileStatus startFile(String src, PermissionStatus permissions,
+    String holder, String clientMachine, EnumSet<CreateFlag> flag,
+    boolean createParent, short replication, long blockSize,
+    CryptoProtocolVersion[] supportedVersions, String ecPolicyName,
+    boolean logRetryCache) throws IOException {
+
+  HdfsFileStatus status;
+  try {
+    status = startFileInt(src, permissions, holder, clientMachine, flag,
+        createParent, replication, blockSize, supportedVersions, ecPolicyName,
+        logRetryCache);
+  } catch (AccessControlException e) {
+    logAuditEvent(false, "create", src);
+    throw e;
+  }
+  logAuditEvent(true, "create", src, status);
+  return status;
+}
+
+private HdfsFileStatus startFileInt(String src,
+    PermissionStatus permissions, String holder, String clientMachine,
+    EnumSet<CreateFlag> flag, boolean createParent, short replication,
+    long blockSize, CryptoProtocolVersion[] supportedVersions,
+    String ecPolicyName, boolean logRetryCache) throws IOException {
+  if (NameNode.stateChangeLog.isDebugEnabled()) {
+    StringBuilder builder = new StringBuilder();
+    builder.append("DIR* NameSystem.startFile: src=").append(src)
+        .append(", holder=").append(holder)
+        .append(", clientMachine=").append(clientMachine)
+        .append(", createParent=").append(createParent)
+        .append(", replication=").append(replication)
+        .append(", createFlag=").append(flag)
+        .append(", blockSize=").append(blockSize)
+        .append(", supportedVersions=")
+        .append(Arrays.toString(supportedVersions));
+    NameNode.stateChangeLog.debug(builder.toString());
+  }
+  ...
+  INodesInPath iip = null;
+  boolean skipSync = true; // until we do something that might create edits
+  HdfsFileStatus stat = null;
+  BlocksMapUpdateInfo toRemoveBlocks = null;
+
+  checkOperation(OperationCategory.WRITE);
+  final FSPermissionChecker pc = getPermissionChecker();
+  // 获取全局锁
+  writeLock();
+  try {
+    checkOperation(OperationCategory.WRITE);
+    checkNameNodeSafeMode("Cannot create file" + src);
+
+    iip = FSDirWriteFileOp.resolvePathForStartFile(
+        dir, pc, src, flag, createParent);
+    ...
+    skipSync = false; // following might generate edits
+    toRemoveBlocks = new BlocksMapUpdateInfo();
+    // 获取目录锁
+    dir.writeLock();
+    try {
+      stat = FSDirWriteFileOp.startFile(this, iip, permissions, holder,
+          clientMachine, flag, createParent, replication, blockSize, feInfo,
+          toRemoveBlocks, shouldReplicate, ecPolicyName, logRetryCache);
+    } catch (IOException e) {
+      skipSync = e instanceof StandbyException;
+      throw e;
+    } finally {
+      // 释放目录锁
+      dir.writeUnlock();
+    }
+  } finally {
+    // 释放全局锁
+    writeUnlock("create");
+    // There might be transactions logged while trying to recover the lease.
+    // They need to be sync'ed even when an exception was thrown.
+    if (!skipSync) {
+      getEditLog().logSync();
+      if (toRemoveBlocks != null) {
+        removeBlocks(toRemoveBlocks);
+        toRemoveBlocks.clear();
+      }
+    }
+  }
+
+  return stat;
+}
+```
+
+FSDirWriteFileOp.startFile 方法：
 
 ```java
 static HdfsFileStatus startFile(
@@ -91,13 +256,13 @@ static HdfsFileStatus startFile(
       iip = addFile(fsd, parent, iip.getLastLocalName(), permissions,
           replication, blockSize, holder, clientMachine, shouldReplicate,
           ecPolicyName);
-      // 生成新文件
+      // 生成 node，添加 node 到 inodeMap 和 fsDirectory 中
       newNode = iip != null ? iip.getLastINode().asFile() : null;
     }
     if (newNode == null) {
       throw new IOException("Unable to add " + src +  " to namespace");
     }
-    // 设置租期
+    // 添加租约，holder = DFSClient_NONMAPREDUCE_264085454_193
     fsn.leaseManager.addLease(
         newNode.getFileUnderConstructionFeature().getClientName(),
         newNode.getId());
@@ -116,6 +281,10 @@ static HdfsFileStatus startFile(
 }
 ```
 
+注意：不支持两个客户端并发上传同一个文件，会抛出异常 `java.io.FileNotFoundException`。
+
+
+## 块操作
 
 ### 创建数据块
 

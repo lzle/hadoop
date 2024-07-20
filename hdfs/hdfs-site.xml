@@ -106,7 +106,7 @@
 <value>true</value>
 </property>
 
-<!-- Threshold (ms) for long holding write lock report，默认 5000，可以改 2000，输出更精细 -->
+<!-- 全局锁 report 时间，超过此时间会进行日志输出，默认 5000，可以改 2000，输出更精细 -->
 <property>
 <name>dfs.namenode.write-lock-reporting-threshold-ms</name>
 <value>2000</value>
