@@ -206,7 +206,7 @@ $ systemctl start datanode
 
 ### daemon
 
-namenode 启动/停止
+NameNode 启动/停止
 
 ```bash
 $ hdfs --daemon start namenode
@@ -214,7 +214,7 @@ $ hdfs --daemon stop namenode
 $ /opt/hadoop/bin/hdfs --daemon status namenode
 ```
 
-datanode 启动/停止
+DataNode 启动/停止
 
 ```bash
 $ hdfs --daemon start datanode
@@ -430,7 +430,7 @@ $ hdfs haadmin -transitionToStandby --forcemanual nn1
 $ sudo -u hadoop /opt/hadoop/bin/hdfs haadmin -failover nn2 nn1
 ```
 
-查看 namenode 状态
+查看 NameNode 状态
 
 ```bash
 $ hdfs haadmin -getAllServiceState
@@ -653,7 +653,7 @@ org.apache.hadoop.hdfs.server.datanode.IncrementalBlockReportManager
 
 ### 心跳超时
 
-datanode 端日志输出
+DataNode 端日志输出
 
 ```
 2022-12-02 15:22:04,287 INFO org.apache.hadoop.hdfs.StateChange: BLOCK* removeDeadDatanode: lost heartbeat from 172.18.154.201:9866, removeBlocksFromBlockMap true
@@ -662,7 +662,7 @@ datanode 端日志输出
 
 ### 注册
 
-namenode 端日志输出
+NameNode 端日志输出
 
 ```
 2022-12-02 15:26:07,556 INFO org.apache.hadoop.hdfs.StateChange: BLOCK* registerDatanode: from DatanodeRegistration(172.18.154.201:9866, datanodeUuid=126b4743-728d-4800-b5bd-5e83c819fecc, infoPort=9864, infoSecurePort=0, ipcPort=9867, storageInfo=lv=-57;cid=CID-b3746fbe-15c7-4492-9690-29df9fcf4749;nsid=652530984;c=1666691608942) storage 126b4743-728d-4800-b5bd-5e83c819fecc
@@ -682,7 +682,7 @@ namenode 端日志输出
 
 ### 上传文件
 
-namenode 端日志输出
+NameNode 端日志输出
 
 ```
 2023-01-03 14:50:13,911 DEBUG org.apache.hadoop.hdfs.StateChange: *DIR* NameNode.create: file /lzl/test/c.txt._COPYING_ for DFSClient_NONMAPREDUCE_-1987862239_1 at 172.18.154.107
@@ -702,7 +702,7 @@ namenode 端日志输出
 2023-01-03 14:50:14,298 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* FSDirectory.unprotectedRenameTo: /lzl/test/c.txt._COPYING_ is renamed to /lzl/test/c.txt
 ```
 
-datanode 端日志输出
+DataNode 端日志输出
 
 ```
 2023-02-08 17:55:56,576 INFO org.apache.hadoop.hdfs.server.datanode.DataNode: Receiving BP-182789411-172.18.154.107-1666691608942:blk_1073743793_2969 src: /172.18.154.201:37440 dest: /172.18.154.107:9866
@@ -716,7 +716,7 @@ datanode 端日志输出
 
 ### 删除文件
 
-namenode 端日志输出，移动到回收站
+DataNode 端日志输出，移动到回收站
 
 ```
 2023-05-29 22:22:48,191 DEBUG org.apache.hadoop.hdfs.StateChange: *DIR* NameNode.mkdirs: /user/hadoop/.Trash/Current/tmp
@@ -730,7 +730,7 @@ namenode 端日志输出，移动到回收站
 
 ### 写锁
 
-namenode 端日志输出
+NameNode 端日志输出
 
 ```
 [root@dx-lt-yd-zhejiang-jinhua-5-10-104-4-41 hadoop]# grep -rn "FSNamesystem write lock held" hadoop-hadoop-namenode-dx-lt-yd-zhejiang-jinhua-5-10-104-4-41.*
@@ -747,6 +747,95 @@ hadoop-hadoop-namenode-dx-lt-yd-zhejiang-jinhua-5-10-104-4-41.log.15:671008:2024
 ## 问题
 
 [问题追踪](hdfs/troubleshooting.md)
+
+### 1、默认 Block Size 的大小
+
+金华 HDFS 集群 128M，石家庄、喜鹊、海外 HDFS 集群 256M，默认 128M
+
+```
+<property>
+<name>dfs.blocksize</name>
+<value>134217728</value>
+<final>false</final>
+<source>hdfs-default.xml</source>
+</property>
+```
+
+### 2、不同客户端并发上传，会有什么效果
+
+客户端 10.104.4.41
+```
+[root@dx-lt-yd-zhejiang-jinhua-5-10-104-7-155 ~]# hdfs dfs -put -f 500M /tmp/500M
+2024-07-21 03:16:47,956 WARN ha.RequestHedgingProxyProvider: Invocation returned exception on [dx-lt-yd-zhejiang-jinhua-5-10-104-4-41/10.104.4.41:8020]
+org.apache.hadoop.ipc.RemoteException(java.io.FileNotFoundException): File does not exist: /tmp/500M._COPYING_ (inode 3102566644) Holder DFSClient_NONMAPREDUCE_1503873289_1 does not have any open files.
+	at org.apache.hadoop.hdfs.server.namenode.FSNamesystem.checkLease(FSNamesystem.java:2811)
+	at org.apache.hadoop.hdfs.server.namenode.FSDirWriteFileOp.completeFileInternal(FSDirWriteFileOp.java:699)
+	at org.apache.hadoop.hdfs.server.namenode.FSDirWriteFileOp.completeFile(FSDirWriteFileOp.java:685)
+	at org.apache.hadoop.hdfs.server.namenode.FSNamesystem.completeFile(FSNamesystem.java:2854)
+	at org.apache.hadoop.hdfs.server.namenode.NameNodeRpcServer.complete(NameNodeRpcServer.java:928)
+	at org.apache.hadoop.hdfs.protocolPB.ClientNamenodeProtocolServerSideTranslatorPB.complete(ClientNamenodeProtocolServerSideTranslatorPB.java:607)
+```
+
+客户端 10.104.5.12
+
+```
+[root@dx-lt-yd-zhejiang-jinhua-5-10-104-5-12 ~]#  hdfs dfs -put -f 500M /tmp/500M
+2024-07-21 03:16:47,996 WARN ha.RequestHedgingProxyProvider: Invocation returned exception on [dx-lt-yd-zhejiang-jinhua-5-10-104-4-41/10.104.4.41:8020]
+org.apache.hadoop.ipc.RemoteException(java.io.FileNotFoundException): File does not exist: /tmp/500M._COPYING_ (inode 3102566705) Holder DFSClient_NONMAPREDUCE_503911796_1 does not have any open files.
+	at org.apache.hadoop.hdfs.server.namenode.FSNamesystem.checkLease(FSNamesystem.java:2811)
+	at org.apache.hadoop.hdfs.server.namenode.FSDirWriteFileOp.analyzeFileState(FSDirWriteFileOp.java:605)
+	at org.apache.hadoop.hdfs.server.namenode.FSDirWriteFileOp.validateAddBlock(FSDirWriteFileOp.java:172)
+	at org.apache.hadoop.hdfs.server.namenode.FSNamesystem.getAdditionalBlock(FSNamesystem.java:2690)
+	at org.apache.hadoop.hdfs.server.namenode.NameNodeRpcServer.addBlock(NameNodeRpcServer.java:875)
+	at org.apache.hadoop.hdfs.protocolPB.ClientNamenodeProtocolServerSideTranslatorPB.addBlock(ClientNamenodeProtocolServerSideTranslatorPB.java:561)
+```
+
+日志
+
+```
+2024-07-21 03:16:46,404 DEBUG org.apache.hadoop.hdfs.StateChange: *DIR* NameNode.create: file /tmp/500M._COPYING_ for DFSClient_NONMAPREDUCE_1503873289_1 at 10.104.7.155
+2024-07-21 03:16:46,404 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* NameSystem.startFile: src=/tmp/500M._COPYING_, holder=DFSClient_NONMAPREDUCE_1503873289_1, clientMachine=10.104.7.155, createParent=true, replication=3, createFlag=[CREATE, OVERWRITE], blockSize=134217728, supportedVersions=[CryptoProtocolVersion{description='Encryption zones', version=2, unknownValue=null}]
+2024-07-21 03:16:46,404 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* NameSystem.startFile: added /tmp/500M._COPYING_ inode 3102566644 DFSClient_NONMAPREDUCE_1503873289_1
+2024-07-21 03:16:46,440 DEBUG org.apache.hadoop.hdfs.StateChange: BLOCK* getAdditionalBlock: /tmp/500M._COPYING_  inodeId 3102566644 for DFSClient_NONMAPREDUCE_1503873289_1
+2024-07-21 03:16:46,442 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* FSDirectory.addBlock: /tmp/500M._COPYING_ with blk_3458315963_2386086046 block is added to the in-memory file system
+2024-07-21 03:16:46,442 INFO org.apache.hadoop.hdfs.StateChange: BLOCK* allocate blk_3458315963_2386086046, replicas=10.104.21.14:9866, 10.104.16.53:9866, 10.104.1.5:9866 for /tmp/500M._COPYING_
+2024-07-21 03:16:46,442 DEBUG org.apache.hadoop.hdfs.StateChange: persistNewBlock: /tmp/500M._COPYING_ with new block blk_3458315963_2386086046, current total block count is 1
+2024-07-21 03:16:46,869 DEBUG org.apache.hadoop.hdfs.StateChange: BLOCK* getAdditionalBlock: /tmp/500M._COPYING_  inodeId 3102566644 for DFSClient_NONMAPREDUCE_1503873289_1
+2024-07-21 03:16:46,872 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* FSDirectory.addBlock: /tmp/500M._COPYING_ with blk_3458315972_2386086055 block is added to the in-memory file system
+2024-07-21 03:16:46,872 INFO org.apache.hadoop.hdfs.StateChange: BLOCK* allocate blk_3458315972_2386086055, replicas=10.104.3.139:9866, 10.104.3.8:9866, 10.104.4.4:9866 for /tmp/500M._COPYING_
+2024-07-21 03:16:46,872 DEBUG org.apache.hadoop.hdfs.StateChange: persistNewBlock: /tmp/500M._COPYING_ with new block blk_3458315972_2386086055, current total block count is 2
+2024-07-21 03:16:47,203 DEBUG org.apache.hadoop.hdfs.StateChange: BLOCK* getAdditionalBlock: /tmp/500M._COPYING_  inodeId 3102566644 for DFSClient_NONMAPREDUCE_1503873289_1
+2024-07-21 03:16:47,210 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* FSDirectory.addBlock: /tmp/500M._COPYING_ with blk_3458315978_2386086061 block is added to the in-memory file system
+2024-07-21 03:16:47,210 INFO org.apache.hadoop.hdfs.StateChange: BLOCK* allocate blk_3458315978_2386086061, replicas=10.104.3.147:9866, 10.104.1.167:9866, 10.104.2.14:9866 for /tmp/500M._COPYING_
+2024-07-21 03:16:47,210 DEBUG org.apache.hadoop.hdfs.StateChange: persistNewBlock: /tmp/500M._COPYING_ with new block blk_3458315978_2386086061, current total block count is 3
+2024-07-21 03:16:47,703 DEBUG org.apache.hadoop.hdfs.StateChange: BLOCK* getAdditionalBlock: /tmp/500M._COPYING_  inodeId 3102566644 for DFSClient_NONMAPREDUCE_1503873289_1
+2024-07-21 03:16:47,706 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* FSDirectory.addBlock: /tmp/500M._COPYING_ with blk_3458315988_2386086071 block is added to the in-memory file system
+2024-07-21 03:16:47,706 INFO org.apache.hadoop.hdfs.StateChange: BLOCK* allocate blk_3458315988_2386086071, replicas=10.104.8.162:9866, 10.104.1.171:9866, 10.104.1.37:9866 for /tmp/500M._COPYING_
+2024-07-21 03:16:47,706 DEBUG org.apache.hadoop.hdfs.StateChange: persistNewBlock: /tmp/500M._COPYING_ with new block blk_3458315988_2386086071, current total block count is 4
+2024-07-21 03:16:47,966 DEBUG org.apache.hadoop.hdfs.StateChange: *DIR* NameNode.create: file /tmp/500M._COPYING_ for DFSClient_NONMAPREDUCE_503911796_1 at 10.104.5.12
+2024-07-21 03:16:47,967 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* NameSystem.startFile: src=/tmp/500M._COPYING_, holder=DFSClient_NONMAPREDUCE_503911796_1, clientMachine=10.104.5.12, createParent=true, replication=3, createFlag=[CREATE, OVERWRITE], blockSize=134217728, supportedVersions=[CryptoProtocolVersion{description='Encryption zones', version=2, unknownValue=null}]
+2024-07-21 03:16:47,967 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* FSDirectory.delete: /tmp/500M._COPYING_
+2024-07-21 03:16:47,967 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* FSDirectory.unprotectedDelete: /tmp/500M._COPYING_ is removed
+2024-07-21 03:16:47,967 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* NameSystem.startFile: added /tmp/500M._COPYING_ inode 3102566705 DFSClient_NONMAPREDUCE_503911796_1
+2024-07-21 03:16:47,969 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* NameSystem.completeFile: /tmp/500M._COPYING_ for DFSClient_NONMAPREDUCE_1503873289_1
+2024-07-21 03:16:47,969 INFO org.apache.hadoop.ipc.Server: IPC Server handler 22 on 8020, call Call#11 Retry#0 org.apache.hadoop.hdfs.protocol.ClientProtocol.complete from 10.104.7.155:57106: java.io.FileNotFoundException: File does not exist: /tmp/500M._COPYING_ (inode 3102566644) Holder DFSClient_NONMAPREDUCE_1503873289_1 does not have any open files.
+2024-07-21 03:16:47,984 DEBUG org.apache.hadoop.hdfs.StateChange: *DIR* Namenode.delete: src=/tmp/500M._COPYING_, recursive=true
+2024-07-21 03:16:47,984 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* NameSystem.delete: /tmp/500M._COPYING_
+2024-07-21 03:16:47,984 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* FSDirectory.delete: /tmp/500M._COPYING_
+2024-07-21 03:16:47,984 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* FSDirectory.unprotectedDelete: /tmp/500M._COPYING_ is removed
+2024-07-21 03:16:47,984 DEBUG org.apache.hadoop.hdfs.StateChange: DIR* Namesystem.delete: /tmp/500M._COPYING_ is removed
+2024-07-21 03:16:48,009 DEBUG org.apache.hadoop.hdfs.StateChange: BLOCK* getAdditionalBlock: /tmp/500M._COPYING_  inodeId 3102566705 for DFSClient_NONMAPREDUCE_503911796_1
+2024-07-21 03:16:48,010 INFO org.apache.hadoop.ipc.Server: IPC Server handler 149 on 8020, call Call#6 Retry#0 org.apache.hadoop.hdfs.protocol.ClientProtocol.addBlock from 10.104.5.12:57694: java.io.FileNotFoundException: File does not exist: /tmp/500M._COPYING_ (inode 3102566705) Holder DFSClient_NONMAPREDUCE_503911796_1 does not have any open files.
+```
+
+1、客户端 10.104.4.41 创建文件 /tmp/500M._COPYING_ inode 3102566644，添加 node 到 inodeMap 和 fsDirectory 中，绑定租约，开始申请 block
+
+2、客户端 10.104.5.12 创建文件 /tmp/500M._COPYING_ inode 3102566705，删除旧的 node 3102566644，重新生成 node 到 inodeMap 和 fsDirectory 中，绑定租约
+
+3、客户端 10.104.4.41 调用 NameSystem.completeFile 时失败，此时 inode 3102566644 已经不在 inodeMap 中，触发 FileNotFoundException 异常，然后执行 rpc 调用 NameSystem.delete 删除文件 /tmp/500M._COPYING_。
+
+4、客户端 10.104.5.12 申请 block 时失败，此时 inode 3102566705 已经不在 inodeMap 中，触发 FileNotFoundException 异常。
+
 
 ## 相关文档
 
