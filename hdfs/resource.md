@@ -53,22 +53,21 @@ HdfsFileStatus create(String src, FsPermission masked,
     throws IOException;
 ```
 
-主要参数：
+**主要参数：**
 
 * flag 标记位 CREATE|APPEND|OVERWRITE，overwrite 表示文件存在时是否覆盖；
 * replication 表示副本数；
 * blockSize 表示块的大小；
 * createParent 用于指示目标文件的父目录不存在时，是否创建目录。
 
-基本流程如下：
-```
-1、获取全局锁 FSNamesystemLock 和 目录锁 dirLock；
+**操作流程：**
 
-2、判断文件是否存在，如果存在并要覆盖写文件，会执行 FSDirectory.delete() 从文件系统 fsDirectory 和 inodeMap 中删除这个文件，
-然后调用 fsn.removeLeasesAndINodes 方法删除租约；
+* 获取全局锁 FSNamesystemLock 和 目录锁 dirLock；
 
-3、在目标文件路径上创建一个新的 Node，添加到 fsDirectory 和 inodeMap 中，在租约管理器中添加租约。
-```
+* 判断文件是否存在，如果存在并要覆盖写文件，会执行 FSDirectory.delete() 删除文件，然后调用 fsn.removeLeasesAndINodes 方法删除租约；
+
+* 创建新的 Node，添加到父目录 INodeDirectory 和全局 inodeMap 中，在租约管理器中增加租约。
+
 
 NamenodeRpcServer.create() 方法：
 
@@ -112,7 +111,7 @@ public HdfsFileStatus create(String src, FsPermission masked,
 }
 ```
 
-FSNamesystem.startFileInt 方法：
+FSNamesystem.startFileInt() 方法：
 
 ```java
 /**
@@ -209,7 +208,7 @@ private HdfsFileStatus startFileInt(String src,
 }
 ```
 
-FSDirWriteFileOp.startFile 方法：
+FSDirWriteFileOp.startFile() 方法：
 
 ```java
 static HdfsFileStatus startFile(
@@ -288,30 +287,43 @@ static HdfsFileStatus startFile(
 
 ### 创建数据块
 
-成功创建 INode 对象后，DFSClient 会调用 ClientProtocol.addBlock()请求分配新的数据块，
-Namenode 会调用 FSNamesystem.getAdditionalBlock()方法响应分配请求并返回新申请的数据块，
-以及存储这个数据块副本的 Datanode 信息。
+成功创建 INode 对象后，DFSClient 会调用 ClientProtocol.addBlock() 请求分配新的数据块，Namenode 会调用 FSNamesystem.getAdditionalBlock() 方法响应分配请求并返回新申请的数据块，以及存储这个数据块副本的 Datanode 信息。
+
+ClientProtocol.addBlock() 方法：
 
 ```java
+/**
+ * A client that wants to write an additional block to the
+ * indicated filename (which must currently be open for writing)
+ * should call addBlock().
+ *
+ * addBlock() allocates a new block and datanodes the block data
+ * should be replicated to.
+ *
+ * addBlock() also commits the previous block by reporting
+ * to the name-node the actual generation stamp and the length
+ * of the block that the client has transmitted to data-nodes.
+ *
+ */
+
+@Idempotent
 LocatedBlock addBlock(String src, String clientName,
     ExtendedBlock previous, DatanodeInfo[] excludeNodes, long fileId,
     String[] favoredNodes, EnumSet<AddBlockFlag> addBlockFlags)
     throws IOException;
 ```
 
-具体实现流程在 getAdditionalBlock() 方法中，主要包括下面三部分：
+NameNode 在 FSNamesystem.getAdditionalBlock() 方法中进行响应，主要分为三个步骤：
 
-```
-1、FSDirWriteFileOp.validateAddBlock 检查文件状态，是否发生请求重传、异常等操作，
+* FSDirWriteFileOp.validateAddBlock 检查文件状态，是否发生请求重传、异常等操作，
 返回实例 ValidateAddBlockResult，包含要申请 block 的信息；
 
-2、FSDirWriteFileOp.chooseTargetForNewBlock 分配数据节点；
+* FSDirWriteFileOp.chooseTargetForNewBlock 分配数据节点；
 
-3、FSDirWriteFileOp.storeAllocatedBlock 完成添加一个新的数据块，这个操作会进行加锁，
+* FSDirWriteFileOp.storeAllocatedBlock 完成添加一个新的数据块，这个操作会进行加锁，
 并且会再次执行 analyzeFileState 方法进行检查。
-```
 
-代码
+FSNamesystem.getAdditionalBlock() 方法：
 
 ```java
 LocatedBlock getAdditionalBlock(
@@ -326,6 +338,7 @@ LocatedBlock getAdditionalBlock(
     FSDirWriteFileOp.ValidateAddBlockResult r;
     checkOperation(OperationCategory.READ);
     final FSPermissionChecker pc = getPermissionChecker();
+    // 全局读锁
     readLock();
     try {
       checkOperation(OperationCategory.READ);
@@ -341,16 +354,17 @@ LocatedBlock getAdditionalBlock(
       // This is a retry. Just return the last block.
       return onRetryBlock[0];
     }
-    // 分配数据节点
+    // 第二部分 分配 DataNode 数据节点
     DatanodeStorageInfo[] targets = FSDirWriteFileOp.chooseTargetForNewBlock(
         blockManager, src, excludedNodes, favoredNodes, flags, r);
 
     checkOperation(OperationCategory.WRITE);
+    // 全局写锁
     writeLock();
     LocatedBlock lb;
     try {
       checkOperation(OperationCategory.WRITE);
-      //
+      // 第三部分 创建新的数据块
       lb = FSDirWriteFileOp.storeAllocatedBlock(
           this, src, fileId, clientName, previous, targets);
     } finally {
@@ -361,30 +375,19 @@ LocatedBlock getAdditionalBlock(
 }
 ```
 
+#### 1、分析状态 analyzeFileState()
 
-#### 1、分析状态——analyzeFileState()
+FSDirWriteFileOp.validateAddBlock() 主要功能在于 analyzeFileState() 方法，analyzeFileState() 首先进行一系列判断操作。判断是否有写操作权限，判断 Namenode 是否处于安全模式中，检查文件系统中保存的对象是否太多，检查文件的租约。最后 analyzeFileState() 会将 Client 传参汇报的最后一个数据块 previousBlock 与 Namenode 内存中记录的文件最后一个数据块 lastBlockInFile 进行比较，有四种情况如下：
 
-validateAddBlock 主要功能在于 analyzeFileState()方法，analyzeFileState首先进行一系列判断操作，判断是否有写操作权限，
-判断 Namenode 是否处于安全模式中，检查文件系统中保存的对象是否太多，检查文件的租约。然后 analyzeFileState() 会将 Client 通过 ClientProtocol.addBlock() 方法汇报
-的最后一个数据块 previousBlock 与 Namenode 内存中记录的文件最后一个数据块 lastBlockInFile 进行比较。
+1、previousBlock、lastBlockInFile 都为 null，文件生成第一个 block，这种情况什么都不需要做。
 
-```
-1、previousBlock、lastBlockInFile 都为null，文件生成第一个 block，这种情况什么都不需要做。
+2、如果 previousBlock == null，也就是 addBlock() 方法并未携带文件最后一个数据块的信息。这种情况可能是 Client 调用 ClientProtocol append() 方法申请追加写文件，而文件的最后一个数据块正好写满，Client 就会调用 addBlock() 方法申请新的数据块。这时方法无须执行任何操作。
 
-2、如果 previousBlock==null，也就是 addBlock()方法并未携带文件最后一个数据块的信息。
-  这种情况可能是 Client 调用 ClientProtocol.append()方法申请追加写文件，而文件的最后一个数据块正好写满，
-  Client 就会调用 addBlock()方法申请新的数据块。这时方法无须执行任何操作。
-
-3、如果 previousBlock 信息与 penultimateBlock 信息匹配，penultimateBlock 是 Namenode记录的文件倒数第二个数据块的信息。
-  这种情况是 Namenode 已经成功地为 Client 分配了数据块，但是响应信息并未送回 Client，所以 Client 重发了请求。
-  对于这种情况，由于 Namenode 已经成功地分配了数据块，并且 Client 没有向新分配的数据块写入任何数据，
-  所以 analyzeFileState()方法会将分配的数据块保存至 onRetryBlock 参数中，
-  getAdditionalBlock()方法可以直接将 onRetryBlock 中保存的数据块再次返回给 Client，而无须构造新的数据块。
+3、如果 previousBlock 信息与 penultimateBlock 信息匹配，penultimateBlock 是 Namenode 记录的文件倒数第二个数据块的信息。这种情况是 Namenode 已经成功地为 Client 分配了数据块，但是响应信息并未送回 Client，所以 Client 重发了请求。对于这种情况，由于 Namenode 已经成功地分配了数据块，并且 Client 没有向新分配的数据块写入任何数据，所以 analyzeFileState() 方法会将分配的数据块保存至 onRetryBlock 参数中，getAdditionalBlock() 方法可以直接将 onRetryBlock 中保存的数据块再次返回给 Client，而无须构造新的数据块。
   
 4、previousBlock 信息与 lastBlockInFile 信息不匹配，这是异常的情况，不应该出现，直接抛出异常。
-```
 
-代码
+FSDirWriteFileOp.analyzeFileState() 方法：
 
 ```java
   private static FileState analyzeFileState(
@@ -447,11 +450,11 @@ validateAddBlock 主要功能在于 analyzeFileState()方法，analyzeFileState�
   }
 ```
 
-**2、分配数据节点——chooseTarget4NewBlock()**
+**2、分配数据节点 chooseTarget4NewBlock()**
 
 略过
 
-**3、提交上一个数据块——commitOrCompleteLastBlock()**
+**3、提交上一个数据块 commitOrCompleteLastBlock()**
 
 再执行提交上一个数据块操作之前，会再次执行 analyzeFileState 方法对文件状态进行分析，主要为了防止失败重试后的并发操作，
 这个操作会进行加锁，所以不会出现两个线程同时申请覆盖的问题。
