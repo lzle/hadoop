@@ -312,6 +312,9 @@ $ hdfs dfs -mkdir -p /lzl/test
 
 ```bash
 $ hdfs dfs -put a.txt /lzl/test
+
+# 覆盖上传，源文件路径 flume 用户需要有权限访问
+$ sudo -u flume /opt/hadoop/bin/hdfs dfs -put -f /tmp/202410091900.t1560.gz /separated/www.xgmengce.com/202410091900.t1560.gz
 ```
 
 3、从本地上传目录
