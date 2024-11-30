@@ -24,6 +24,7 @@
     * [下载文件](#下载文件)
     * [删除文件](#删除文件)
     * [写锁](#写锁)
+* [重构](#重构)
 * [问题](#问题)
 * [相关文档](#相关文档)
 
@@ -746,6 +747,61 @@ hadoop-hadoop-namenode-dx-lt-yd-zhejiang-jinhua-5-10-104-4-41.log.14:744456:2024
 hadoop-hadoop-namenode-dx-lt-yd-zhejiang-jinhua-5-10-104-4-41.log.15:162524:2024-07-15 09:29:26,556 INFO org.apache.hadoop.hdfs.server.namenode.FSNamesystem: FSNamesystem write lock held for 18014 ms via java.lang.Thread.getStackTrace(Thread.java:1559)
 hadoop-hadoop-namenode-dx-lt-yd-zhejiang-jinhua-5-10-104-4-41.log.15:671008:2024-07-15 09:32:20,644 INFO org.apache.hadoop.hdfs.server.namenode.FSNamesystem: FSNamesystem write lock held for 20715 ms via java.lang.Thread.getStackTrace(Thread.java:1559)
 ```
+
+## 重构
+
+修改源码后重新编译，查看当前 mvn 版本
+
+```
+$ mvn -v
+Apache Maven 3.9.4 (dfbb324ad4a7c8fb0bf182e6d91b0ae20e3d2dd9)
+Maven home: /usr/local/maven/apache-maven-3.9.4
+Java version: 1.8.0_361, vendor: Oracle Corporation, runtime: /Library/Java/JavaVirtualMachines/jdk1.8.0_361.jdk/Contents/Home/jre
+Default locale: zh_CN, platform encoding: UTF-8
+OS name: "mac os x", version: "10.15.7", arch: "x86_64", family: "mac"
+```
+
+编译 hadoop-hdfs
+
+```
+$ cd hadoop-rel-release-3.1.2/hadoop-hdfs-project/hadoop-hdfs
+
+$ mvn clean install -DskipTests -X
+
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  24.130 s
+[INFO] Finished at: 2024-11-30T17:06:43+08:00
+[INFO] ------------------------------------------------------------------------
+[DEBUG] Shutting down adapter factory; available factories [file-lock, rwlock-local, semaphore-local, noop]; available name mappers [discriminating, file-gav, file-hgav, file-static, gav, static]
+[DEBUG] Shutting down 'file-lock' factory
+[DEBUG] Shutting down 'rwlock-local' factory
+[DEBUG] Shutting down 'semaphore-local' factory
+[DEBUG] Shutting down 'noop' factory
+```
+
+查看 target 目录
+
+```
+$ ll target
+total 22056
+drwxr-xr-x   3 lianzhang  staff       96 11 30 17:06 antrun
+drwxr-xr-x   5 lianzhang  staff      160 11 30 17:06 classes
+drwxr-xr-x   4 lianzhang  staff      128 11 30 17:06 generated-sources
+drwxr-xr-x   3 lianzhang  staff       96 11 30 17:06 generated-test-sources
+-rw-r--r--   1 lianzhang  staff  5518262 11 30 17:06 hadoop-hdfs-3.1.2-tests.jar
+-rw-r--r--   1 lianzhang  staff  5761349 11 30 17:06 hadoop-hdfs-3.1.2.jar
+-rw-r--r--   1 lianzhang  staff     4835 11 30 17:06 hadoop-maven-plugins-protoc-checksums.json
+drwxr-xr-x   2 lianzhang  staff       64 11 30 17:06 log
+drwxr-xr-x   3 lianzhang  staff       96 11 30 17:06 maven-archiver
+drwxr-xr-x   3 lianzhang  staff       96 11 30 17:06 maven-shared-archive-resources
+drwxr-xr-x   3 lianzhang  staff       96 11 30 17:06 test
+drwxr-xr-x  59 lianzhang  staff     1888 11 30 17:06 test-classes
+drwxr-xr-x   2 lianzhang  staff       64 11 30 17:06 test-dir
+drwxr-xr-x   8 lianzhang  staff      256 11 30 17:06 webapps
+```
+
 
 ## 问题
 
