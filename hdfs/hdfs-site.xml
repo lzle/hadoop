@@ -124,5 +124,13 @@
 <value>268435456</value>
 </property>
 
+<!-- 单目录下最大文件数 -->
+<property>
+  <name>dfs.namenode.fs-limits.max-directory-items</name>
+  <value>2097152</value>
+</property>
 
-
+<property>
+  <name>dfs.qjournal.write-txns.timeout.ms</name>
+  <value>30000</value>
+</property>
